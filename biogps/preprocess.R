@@ -5,13 +5,13 @@ library(hgu133a.db)
 db <- hgu133a.db;
 
 # load expression data
-x <- qread("U133AGNF1B.gcrma.csv", type="csv", check.names=FALSE);
+x <- qread("data/U133AGNF1B.gcrma.csv", type="csv", check.names=FALSE);
 rownames(x) <- x[,1];
 tissues <- colnames(x)[-1];
 x <- x[,-1];
 x <- as.matrix(log2(x + 1));
 
-groups <- qread("tissues.tsv");
+groups <- qread("data/tissues.tsv");
 
 pheno <- data.frame(
 	sample_id = colnames(x),
@@ -47,5 +47,5 @@ x <- x[!idx, ];
 sum(duplicated(rownames(x)))
 dim(x)
 
-qwrite(x, "gnf1h.rds");
-qwrite(pheno, "gnf1h_pheno.rds");
+qwrite(x, "data/gnf1h.rds");
+qwrite(pheno, "data/gnf1h_pheno.rds");

@@ -2,8 +2,8 @@ library(io)
 library(ggplot2)
 library(dplyr)
 
-x <- qread("gnf1h.rds");
-pheno <- qread("gnf1h_pheno.rds");
+x <- qread("data/gnf1h.rds");
+pheno <- qread("data/gnf1h_pheno.rds");
 
 # examine retina tissue
 idx <- pheno$tissue == "retina";
