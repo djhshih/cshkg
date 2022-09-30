@@ -4,12 +4,12 @@ Adipocyte	fat
 AdrenalCortex	gland
 Adrenalgland	gland
 Amygdala	CNS
-Appendix	gastrointestinal
+Appendix	gastroint
 AtrioventricularNode	PNS
 BDCA4+_DentriticCells	immune
 Bonemarrow	immune
 BronchialEpithelialCells	lung
-CD105+_Endothelial	endothelial
+CD105+_Endothelial	endothel
 CD14+_Monocytes	myeloid
 CD19+_BCells(neg._sel.)	lymphoid
 CD33+_Myeloid	myeloid
@@ -24,7 +24,7 @@ Cerebellum	CNS
 CerebellumPeduncles	CNS
 CiliaryGanglion	CNS
 CingulateCortex	CNS
-Colorectaladenocarcinoma	gastrointestinal
+Colorectaladenocarcinoma	gastroint
 DorsalRootGanglion	CNS
 FetalThyroid	gland
 Fetalbrain	CNS
@@ -56,7 +56,7 @@ PrefrontalCortex	CNS
 Prostate	prostate
 Salivarygland	gland
 SkeletalMuscle	muscle
-Skin	epithelial
+Skin	epithel
 SmoothMuscle	muscle
 Spinalcord	PNS
 SubthalamicNucleus	CNS
@@ -78,8 +78,8 @@ Uterus	uterus
 UterusCorpus	uterus
 WholeBlood	CNS
 Wholebrain	CNS
-colon	gastrointestinal
+colon	gastroint
 pineal_day	gland
 pineal_night	gland
 retina	CNS
-small_intestine	gastrointestinal
+small_intestine	gastroint
