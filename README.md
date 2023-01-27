@@ -5,6 +5,12 @@ The purpose of this project lies in analysing the expression levels of various g
 
 ## Set up
 
+SSH key
+A public key was set and saved in /home/yerihan/.ssh/id_ed25519.pub
+```
+ssh-keygen -t ed25519 -C "hanyeri0223@gmail.com"
+```
+
 Github
 ```
 git clone git@github.com:hanyeri/cshkg
@@ -13,12 +19,6 @@ User information
 ```
 git config --global user.email "hanyeri0223@gmail.com"
 git config --global user.name "Yeri Han"
-git push
-```
-SSH key
-A public key was set and saved in /home/yerihan/.ssh/id_ed25519.pub
-```
-ssh-keygen -t ed25519 -C "hanyeri0223@gmail.com"
 ```
 
 On Fedora 36, install ...
@@ -33,8 +33,10 @@ developmental files, R header files
 -devel
 sudo dnf install R-core-devel R-java-devel libRmath-devel
 ```
-
-
+Set R directory
+```
+setwd("~/projects/cshkg/biogps")
+```
 BioConductor
 BiocManager
 
