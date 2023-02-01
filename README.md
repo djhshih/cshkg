@@ -1,12 +1,14 @@
 # Context-specific house keeping genes
 
 ## Purpose
-The purpose of this project lies in analysing the expression levels of various genes of different tissues and discovering a "context-specific" housekeeping gene. "Context-specific" refers to consistency in the gene expression across different cell types and developmental stage. 
+The purpose of this project lies in analysing the expression levels of various genes of different tissues and discovering a "context-specific" housekeeping gene. "Context-specific" refers to consistency in the gene expression across different cell types, disease and developmental stage. 
 
 ## Set up
 
 SSH key
 A public key was set and saved in /home/yerihan/.ssh/id_ed25519.pub
+
+[Guide to set up a SSH key](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent)
 ```
 ssh-keygen -t ed25519 -C "hanyeri0223@gmail.com"
 ```
@@ -25,32 +27,42 @@ On Fedora 36, install ...
 ```
 sudo dnf install rstudio-desktop
 ```
+Developmental files-devel, R header files
 ```
 sudo dnf install make automake gcc gcc-c++ kernel-devel
-```
-developmental files, R header files
-```
--devel
 sudo dnf install R-core-devel R-java-devel libRmath-devel
 ```
-Set R directory
-```
-setwd("~/projects/cshkg/biogps")
-```
-BioConductor
-BiocManager
+Install R packages
 
-BiocManager::install
+* BioConductor
+* BiocManager
+* annotate
+* hgu133a.db: human genome u133a expression array annotation data
+* io: read from, write to, plot to in an unified manner
+```
+install.packages("io")
+BiocManager::install(c("annotate", "hgu133a.db"))
+```
+
+### Remarks
+Bioconductor packages could not be downloaded completely at first because R was an older 
+version and the outdated packages were relocated to a backup server, taking too much time to be retrieved. Both Fedora and R are updated and biocManager packages were then be able to be downloaded.
+
+
+## Analysis
+Set R directory: 
+```
+[Session]-[Set Working Directory]-[To Source file location]
+```
 
 ## Download data
 run get.sh
 01/27/2023 removed zip file after unzipping
 
-### Git
-
-add
-commit
-push
-diff
+## Git
+* add: take modified file from working directory to Git index (staging area)
+* commit: creates a new revision log, you can only commit after you add
+* push: add the change to the GitHub
+* diff: outputs the difference between two inputs
 
 [Guide on Git](https://rogerdudler.github.io/git-guide/)
