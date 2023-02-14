@@ -34,6 +34,8 @@ sudo dnf install R-core-devel R-java-devel libRmath-devel
 ```
 Install R packages
 
+For preprocessing:
+
 * BioConductor
 * BiocManager
 * annotate
@@ -42,6 +44,11 @@ Install R packages
 ```
 install.packages("io")
 BiocManager::install(c("annotate", "hgu133a.db"))
+```
+
+For Analysis
+```
+install.packages(c("ggplot2","dplyr")
 ```
 
 ### Remarks
@@ -55,6 +62,8 @@ Set R directory:
 ```
 [Session]-[Set Working Directory]-[To Source file location]
 ```
+Preprocess the data
+
 
 ## Download data
 run get.sh
