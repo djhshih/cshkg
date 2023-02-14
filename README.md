@@ -58,7 +58,10 @@ Set R directory:
 
 ## Download data
 run get.sh
-01/27/2023 removed zip file after unzipping
+27/01/2023 removed zip file after unzipping
+
+run get.sh to download pancan data
+14/02/2023
 
 ## Git
 * add: take modified file from working directory to Git index (staging area)
