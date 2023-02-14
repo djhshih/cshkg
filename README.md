@@ -34,6 +34,8 @@ sudo dnf install R-core-devel R-java-devel libRmath-devel
 ```
 Install R packages
 
+For preprocessing:
+
 * BioConductor
 * BiocManager
 * annotate
@@ -42,6 +44,11 @@ Install R packages
 ```
 install.packages("io")
 BiocManager::install(c("annotate", "hgu133a.db"))
+```
+
+For Analysis
+```
+install.packages(c("ggplot2","dplyr")
 ```
 
 ### Remarks
@@ -55,10 +62,16 @@ Set R directory:
 ```
 [Session]-[Set Working Directory]-[To Source file location]
 ```
+Preprocess the data
+
 
 ## Download data
 run get.sh
-01/27/2023 removed zip file after unzipping
+27/01/2023 removed zip file after unzipping
+
+pancan-run get.sh to download tcga data
+14/02/2023
+
 
 ## Git
 * add: take modified file from working directory to Git index (staging area)
