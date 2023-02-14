@@ -69,9 +69,8 @@ Preprocess the data
 run get.sh
 27/01/2023 removed zip file after unzipping
 
-pancan-run get.sh to download tcga data
+run get.sh to download pancan data
 14/02/2023
-
 
 ## Git
 * add: take modified file from working directory to Git index (staging area)
