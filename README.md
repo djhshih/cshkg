@@ -39,7 +39,7 @@ For preprocessing:
 * BioConductor
 * BiocManager
 * annotate
-* tidyverse: include read_csv() function
+* tidyverse: include read_csv() function, packages including "ragg" and "textshaping" had to be installed separately and directly on the terminal due to configuration fails.
 * hgu133a.db: human genome u133a expression array annotation data
 * io: read from, write to, plot to in an unified manner
 ```
