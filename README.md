@@ -57,6 +57,8 @@ Bioconductor packages could not be downloaded completely at first because R was 
 version and the outdated packages were relocated to a backup server, taking too much time to be retrieved. Both Fedora and R are updated and biocManager packages were then be able to be downloaded. 
 [Guide on updating Fedora](https://docs.fedoraproject.org/en-US/quick-docs/dnf-system-upgrade/)
 
+[1-3-2023] loaded data in rds file to ease handling on RStudio.
+
 
 ## Analysis
 Set R directory: 
