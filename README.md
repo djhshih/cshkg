@@ -66,6 +66,9 @@ Set R directory:
 [Session]-[Set Working Directory]-[To Source file location]
 ```
 Preprocess the data
+1. biogps
+2. pancan
+[1-3-2023] explore.R: grouping samples into sample type and cancer type; removed rare samples with group frequency <10
 
 
 ## Download data
