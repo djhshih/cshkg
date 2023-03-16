@@ -36,3 +36,8 @@ levels(pheno$group)[levels(pheno$group) %in% rare.groups] <- NA;
 
 table(pheno$group)
 sum(is.na(pheno$group))
+
+# calculate standard deviation between the groups
+
+
+# calculate standard deviation within the group
