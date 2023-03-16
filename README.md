@@ -70,6 +70,9 @@ Preprocess the data
 2. pancan
 <br />[1-3-2023] explore.R: grouping samples into sample type and cancer type; removed rare samples with group frequency <10
 
+Calculate variations within and between the groups
+
+
 
 ## Download data
 run get.sh
