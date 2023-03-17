@@ -37,6 +37,12 @@ levels(pheno$group)[levels(pheno$group) %in% rare.groups] <- NA;
 table(pheno$group)
 sum(is.na(pheno$group))
 
+# arrange and formatting the data into a dataframe
+BiocManager::install("edgeR")
+library("limma")
+library("edgeR")
+
+
 # calculate standard deviation between the groups
 
 
