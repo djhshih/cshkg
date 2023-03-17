@@ -37,13 +37,24 @@ levels(pheno$group)[levels(pheno$group) %in% rare.groups] <- NA;
 table(pheno$group)
 sum(is.na(pheno$group))
 
-# arrange and formatting the data into a dataframe
+
+# calculate standard deviation within the group
 BiocManager::install("edgeR")
 library("limma")
 library("edgeR")
 
+##pheno_ACCTP <- na.omit(pheno[pheno$group == "ACC-TP",])
 
-# calculate standard deviation between the groups
+gene <- "UBC"
 
+within_means = tapply(mat[gene,], pheno$group, mean)
+within_sds = tapply(mat[gene,], pheno$group, sd)
 
-# calculate standard deviation within the group
+##d_within <- data.frame(
+##sample_id = pheno_ACCTP$sample_id,
+
+##)
+
+# calculate standard deviation betw3en the groups
+overall_mean = mean(mat[gene,])
+between_sd = sqrt(sum((within_means-overall_mean)^2)/(nrow(within_means)-1))
