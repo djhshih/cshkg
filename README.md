@@ -74,7 +74,7 @@ Calculate variations within and between the groups
 
 For each gene, between group standard deviation
 ```
-sd= √((∑_g▒〖(m_g-m ̅ 〗^2))/(G-1))
+sd= √(〖∑_g▒〖(m_g-m ̅ 〗)〗^2/(G-1))
 m ̅=  1/G ∑_(g=1)^G▒m_g 
 G=number of groups
 m_g=mean expression of group g
@@ -83,11 +83,12 @@ N_g=number of genes
 ```
 For a group, within group standard deviation
 ```
-sd= √((∑_i▒〖(x_i^((g))-x ̅^((g)))〗^2)/(N_g-1))  
+sd= √((∑_g▒〖(x_i^((g))-x ̅^((g)))〗^2 )/((∑_g▒〖N_g)〗-1))  
 x ̅^((g))=mean expression in all the samples within group g
 x ̅^((g))=  1/N_g  ∑_(i=1)^(N_g)▒X_i^((g)) 
 N_g=number of samples
 X_i^((g))=expression in sample 1 within group g
+
 ```
 
 
