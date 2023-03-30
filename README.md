@@ -71,9 +71,10 @@ Preprocess the data
 <br />[1-3-2023] explore.R: grouping samples into sample type and cancer type; removed rare samples with group frequency <10
 
 Calculate variations within and between the groups
+
 For each gene, between group standard deviation
 ```
-sd= √((∑_g▒〖(m_g-m ̅ 〗))/(G-1))
+sd= √((∑_g▒〖(m_g-m ̅ 〗^2))/(G-1))
 m ̅=  1/G ∑_(g=1)^G▒m_g 
 G=number of groups
 m_g=mean expression of group g
@@ -82,7 +83,7 @@ N_g=number of genes
 ```
 For a group, within group standard deviation
 ```
-sd= √((∑_i▒〖(x_i^((g))-x ̅^((g)))〗)/(N_g-1))  
+sd= √((∑_i▒〖(x_i^((g))-x ̅^((g)))〗^2)/(N_g-1))  
 x ̅^((g))=mean expression in all the samples within group g
 x ̅^((g))=  1/N_g  ∑_(i=1)^(N_g)▒X_i^((g)) 
 N_g=number of samples
