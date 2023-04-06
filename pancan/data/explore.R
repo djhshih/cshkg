@@ -43,26 +43,34 @@ BiocManager::install("edgeR")
 library("limma")
 library("edgeR")
 
+geneofinterest <- c("UBC", "GAPDH")
+dfplot <- data.frame()
 
-gene <- "UBC"
+for (gene in geneofinterest) {
+  
+  v <- mat[gene, ];
+  
+  within_means = tapply(v, pheno$group, mean)
+  within_sds = tapply(v, pheno$group, sd)
+  
+  within_sd <- sqrt(
+    sum((v - within_means[as.numeric(pheno$group)])^2, na.rm=TRUE) / 
+      (length(v) - 1))
+  
+  ##within_sd_ESCANT = tapply(mat[gene,], pheno$group =="ESCA-NT", sd)
+  
+  # calculate standard deviation between the groups
+  
+  overall_mean = mean(within_means)
 
-v <- mat[gene, ];
+  between_sd = sqrt(sum((within_means-overall_mean)^2)/(length(within_means)-1))
+  
+  
+  # plot the graph between within the group sd and between the group sd for different genes
+  ##dfplot <- data.frame(within_sd, between_sd, row.names = gene)
+  dfplot <- rbind(dfplot, data.frame(within_sd, between_sd, row.names = gene))
+}
 
-within_means = tapply(mat[gene,], pheno$group, mean)
-within_sds = tapply(mat[gene,], pheno$group, sd)
-
-within_sd <- sqrt(
-  sum((v - within_means[as.numeric(pheno$group)])^2, na.rm=TRUE) / 
-  (length(v) - 1)
-)
-
-#within_sd_ESCANT = tapply(mat[gene,], pheno$group =="ESCA-NT", sd)
-# calculate standard deviation betw3en the groups
-
-overall_mean = mean(within_means)
-
-between_sd = sqrt(sum((within_means-overall_mean)^2)/(length(within_means)-1))
-
-
-# plot the graph between within the group sd and between the group sd for different genes
-
+ggplot(dfplot, aes("within the group","between the groups", label = gene))+
+  geom_point()+
+  geom_text(hjust = 0, nudge_x = 0.02)
