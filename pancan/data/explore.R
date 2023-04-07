@@ -44,7 +44,7 @@ BiocManager::install("edgeR")
 library("limma")
 library("edgeR")
 
-#geneofinterest <- c("UBC", "GAPDH", "ABCA1", "TP53", "ACTB")
+#geneofinterest <- c("UBC", "GAPDH", "ACTB")
 geneofinterest <- rownames(mat)
 dfplot <- data.frame()
 
