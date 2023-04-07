@@ -44,7 +44,7 @@ BiocManager::install("edgeR")
 library("limma")
 library("edgeR")
 
-geneofinterest <- c("UBC", "GAPDH")
+geneofinterest <- c("UBC", "GAPDH", "ABCA1", "TP53", "ACTB")
 dfplot <- data.frame()
 
 for (gene in geneofinterest) {
@@ -72,6 +72,9 @@ for (gene in geneofinterest) {
   dfplot <- rbind(dfplot, data.frame(within_sd, between_sd, row.names = gene))
 }
 
-ggplot(dfplot, aes(x=within_sd, y=between_sd, label = gene))+
+ggplot(dfplot, aes(x=within_sd, y=between_sd))+
   geom_point()+
-  geom_text(hjust = 0, nudge_x = 0.005)
+  geom_text(
+    label = rownames(dfplot),
+    hjust = 0, nudge_x = 0.005)
+  
