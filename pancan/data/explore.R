@@ -7,7 +7,10 @@ type.info <- qread("../annot/sample-type-code_tcga.tsv")
 
 
 x <- qread("expr_pancan.rds");
-mat <- x$data;
+mat0 <- x$data;
+
+# NB beware of copy-on-write
+mat <- mat0;
 
 # simplify colnames in mat
 
@@ -38,46 +41,45 @@ levels(pheno$group)[levels(pheno$group) %in% rare.groups] <- NA;
 table(pheno$group)
 sum(is.na(pheno$group))
 
+stopifnot(pheno$sample_id == colnames(mat))
 
 # calculate standard deviation within the group
 BiocManager::install("edgeR")
 library("limma")
 library("edgeR")
 
-#geneofinterest <- c("UBC", "GAPDH", "ACTB")
-geneofinterest <- rownames(mat)
+geneofinterest <- sample(rownames(mat), 1000);
+
+#geneofinterest <- c("UBC", "GAPDH", "ACTB","TBP")
+##geneofinterest <- rownames(mat)
 dfplot <- data.frame()
 
 for (gene in geneofinterest) {
   
   v <- mat[gene, ];
   
-  within_means = tapply(v, pheno$group, mean)
-  within_sds = tapply(v, pheno$group, sd)
+  within_means = tapply(v, pheno$group, mean, na.rm=TRUE)
+  #within_sds = tapply(v, pheno$group, sd)
   
   within_sd <- sqrt(
     sum((v - within_means[as.numeric(pheno$group)])^2, na.rm=TRUE) / 
       (length(v) - 1))
   
-  ##within_sd_ESCANT = tapply(mat[gene,], pheno$group =="ESCA-NT", sd)
-  
+
   # calculate standard deviation between the groups
-  
   overall_mean = mean(within_means)
 
   between_sd = sqrt(sum((within_means-overall_mean)^2)/(length(within_means)-1))
   
   
   # plot the graph between within the group sd and between the group sd for different genes
-  ##dfplot <- data.frame(within_sd, between_sd, row.names = gene)
   dfplot <- rbind(dfplot, data.frame(within_sd, between_sd, row.names = gene))
 }
 
-lessthan <- subset(dfplot, dfplot$within_sd < 0.35)
-
-ggplot(lessthan, aes(x=within_sd, y=between_sd))+
+##lessthan <- subset(dfplot, dfplot$within_sd < 0.35)
+ggplot(dfplot, aes(x=within_sd, y=between_sd))+
   geom_point()+
   geom_text(
-    label = rownames(lessthan),
+    label = rownames(dfplot),
     hjust = 0, nudge_x = 0.005)
   
