@@ -12,6 +12,9 @@ mat0 <- x$data;
 # NB beware of copy-on-write
 mat <- mat0;
 
+##idex <- sample.int(ncol(mat0), 100);
+##mat <- mat0[, idex]
+
 # simplify colnames in mat
 
 #idx <- match("TCGA-OR-A5J1-01A", proj.info$sample);
