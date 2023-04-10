@@ -17,3 +17,6 @@ testwithin_sd <- sqrt(
 testoverall_mean = mean(testwithin_means)
   
 testbetween_sd = sqrt(sum((testwithin_means-testoverall_mean)^2)/(length(testwithin_means)-1))
+
+print(paste("within-group sd: ", testwithin_sd))
+print(paste("between-group sd: ", testbetween_sd))
