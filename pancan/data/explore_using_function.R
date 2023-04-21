@@ -1,5 +1,8 @@
+
 library(io)
 library(ggplot2)
+library(ggrepel)
+
 
 source("sd_function.R")
 
@@ -41,26 +44,37 @@ sum(is.na(pheno$group))
 stopifnot(pheno$sample_id == colnames(mat))
 
 
+N <- ncol(mat);
+K <- length(levels(pheno$group));
+
 #Calculate standard deviation within and between the groups
 
-geneofinterest <- sample(rownames(mat), 1000)
-  #sample.int(nrow(mat),10)
-sd_plot <- data.frame()
+genes <- rownames(mat)
 
-for (gene in geneofinterest) {
-  v <- mat[gene,]
-  
-  within_sd = get_within.sd(v, pheno$group)
-  between_sd = get_btwn.sd(v, pheno$group)
-  
-  # plot the graph between within the group sd and between the group sd for different genes
-  sd_plot <- rbind(sd_plot, data.frame(within_sd, between_sd, row.names=gene))
-  
-}
+within_sds <- unlist(lapply(genes, function(gene) {
+  get_within.sd(mat[gene, ], pheno$group)
+}));
 
-ggplot(sd_plot, aes(x=within_sd, y=between_sd))+
-  geom_point()+
-  geom_text(
-    label = rownames(sd_plot),
-    hjust = 0, nudge_x = 0.005
-  )
+between_sds <- unlist(lapply(genes, function(gene) {
+  get_btwn.sd(mat[gene, ], pheno$group)
+}));
+
+d.sd <- data.frame(gene = genes, within_sd = within_sds, between_sd = between_sds);
+qwrite(d.sd, "sds.rds")
+
+housekeeping <- c("ACTB", "UBC", "GAPDH");
+dplyr::filter(d.sd, gene %in% housekeeping)
+
+d.sd.sub <- subset(d.sd, within_sd < 0.8)
+dim(d.sd.sub)
+
+ggplot(d.sd.sub, aes(x=within_sd, y=between_sd, label=gene))+
+  #geom_text_repel() +
+  geom_point(alpha=0.1) + coord_fixed() +
+  geom_abline(yintercept=0, slope = sqrt((N - K) / (N - K - 2)))
+
+ggplot(subset(d.sd.sub, within_sd < 0.25), aes(x=within_sd, y=between_sd, label=gene))+
+  geom_label_repel() +
+  geom_point() + coord_fixed() +
+  geom_abline(yintercept=0, slope = sqrt((N - K) / (N - K - 2)))
+
