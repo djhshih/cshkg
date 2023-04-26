@@ -77,7 +77,7 @@ overall_mean <- mean(gmean.problematic, na.rm=TRUE)
 #print(sum((group_mean-overall_mean)^2))
 between_sd.problematic <- sqrt(sum((gmean.problematic-overall_mean)^2, na.rm=TRUE) / (length(gmean.problematic)-1))
 
-housekeeping <- c("ACTB", "UBC", "GAPDH", "");  # TODO: Add more!
+housekeeping <- c("ACTB", "UBC", "GAPDH", "TBP", "RPS18", "G6PD", "HPRT1", "LDHA", "RPL19","RPL18","RPL11","RPL32", "PGK1", "PPIA", "RPS18", "ASNS","ATP2B4", "PEX19","RXRA");  # TODO: Add more!
 dplyr::filter(d.sd, gene %in% housekeeping)
 
 d.sd.sub <- subset(d.sd, within_sd < 0.8)
