@@ -81,12 +81,15 @@ housekeeping <- c("ACTB", "UBC", "GAPDH", "TBP", "RPS18", "G6PD", "HPRT1", "LDHA
 dplyr::filter(d.sd, gene %in% housekeeping)
 
 d.sd.sub <- subset(d.sd, within_sd < 0.8)
+hkg.sub <- subset(d.sd.sub, d.sd.sub$gene %in% housekeeping)
 dim(d.sd.sub)
 
 ggplot(d.sd.sub, aes(x=within_sd, y=between_sd, label=gene))+
   #geom_text_repel() +
   geom_point(alpha=0.1) + coord_fixed() +
+  geom_point(hkg.sub, mapping=aes(color="red"))+ geom_label_repel(hkg.sub, mapping=aes(color="red"))+
   geom_abline(yintercept=0, slope = sqrt((N - K) / (N - K - 2)))
+
 
 ggplot(subset(d.sd.sub, within_sd < 0.25), aes(x=within_sd, y=between_sd, label=gene))+
   geom_label_repel() +
