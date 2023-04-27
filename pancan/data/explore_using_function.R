@@ -105,16 +105,29 @@ common_gene <- c("TP53","EGFR","AKT1")
 hkg.sub <- dplyr::filter(d.sd, gene %in% housekeeping)
 dplyr::filter(d.sd, gene %in% common_gene)
 
-# plot all genes (btwn against within)
-pdf("plot2.pdf", width = 8, height = 8)
-ggplot(d.sd, aes(x=within_sd, y=between_sd))+
-  ggtitle("Between group SD against Within group SD")+
-  geom_point()+
-  theme(plot.title = element_text(hjust = 0.5))+
-  theme_linedraw()
-dev.off()
 
+# Set ggplot options globally
+#options(ggrepel.max.overlaps = Inf)
+
+# figure2: sd of all genes (btwn against within)
+qdraw(
+  ggplot(d.sd, aes(x=within_sd, y=between_sd))+
+    ggtitle("Between group SD against Within group SD")+
+    geom_point(alpha = 0.9, size =0.5)+
+    geom_point(data= hkg.sub, color="red")+
+    geom_label_repel(data = hkg.sub, aes(label=gene), color="red", label.padding = 0.1, max.overlaps = Inf, segment.curvature=-1e-20, segment.square = TRUE)+
+    theme(plot.title = element_text(hjust = 0.5))+
+    theme_linedraw()+
+    geom_abline(intercept=0, slope=sqrt((N - K) / (N - K - 2))),
+  width = 8, height = 8,
+  file = "sd_all_genes_with_hkg_highlights2.png"
+)  
+
+
+# subset all genes whose within_sd < 0.8
 d.sd.sub <- subset(d.sd, within_sd < 0.8)
+
+
 
 #remove genes with very low expression
 min_hkg_exp <- min(hkg.sub$mean)
@@ -126,16 +139,20 @@ common.sub <- subset(d.sd, d.sd$gene %in% common_gene)
 
 dim(d.sd.sub)
 
-
+library(io)
 #within_sd <0.8
-pdf("plot1.pdf", width = 8, height = 8)
-ggplot(d.sd.sub, aes(x=within_sd, y=between_sd, label=gene))+
-  #geom_text_repel() +
-  geom_point(alpha=0.1) + coord_fixed() +
-  geom_point(hkg.sub, mapping=aes(color="red"))+ geom_label_repel(hkg.sub, mapping=aes(color="red"),label.padding = 0.1)+
-  geom_abline(yintercept=0, slope = sqrt((N - K) / (N - K - 2)))+
-  theme_minimal()
-dev.off()
+qdraw(
+  ggplot(d.sd.sub, aes(x=within_sd, y=between_sd, label=gene))+
+    #geom_text_repel() +
+    geom_point(alpha=0.1) + coord_fixed() +
+    geom_point(data= hkg.sub, aes(color=gene))+
+    geom_label_repel(data = hkg.sub, aes(color=gene),label.padding = 0.1)+
+    geom_abline(intercept=0, slope = sqrt((N - K) / (N - K - 2)))+
+    theme_minimal()
+  ,
+  width = 8, height = 8,
+  file = "within_sd_less_than_0.8.png"
+)
 
 #within_sd < 0.25
 ggplot(subset(d.sd.sub, within_sd < 0.25), aes(x=within_sd, y=between_sd, label=gene))+
