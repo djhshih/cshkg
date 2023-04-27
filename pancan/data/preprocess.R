@@ -4,7 +4,7 @@ library(org.Hs.eg.db)
 
 # human genome build in PanCanAtlas: hg19
 
-in.fn <- as.filename("expr_pancan.tsv");
+in.fn <- as.filename("tcga-pancan-expr.tsv");
 out.fn <- set_fext(in.fn, "rds");
 
 expr0 <- fread(tag(in.fn));
