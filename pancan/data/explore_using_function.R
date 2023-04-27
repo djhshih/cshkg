@@ -124,14 +124,17 @@ qdraw(
 )  
 
 
+nrow(dplyr::filter(d.sd, mean>=8)) # 9137 genes
+
 # subset all genes whose within_sd < 0.8
 d.sd.sub <- subset(d.sd, within_sd < 0.8)
+nrow(dplyr::filter(d.sd.sub, mean>=8)) # 6779 genes
 
 
 
-#remove genes with very low expression
-min_hkg_exp <- min(hkg.sub$mean)
-d.sd.sub <- subset(d.sd.sub, mean>=min_hkg_exp)
+# remove genes with very low expression (remove if <8)
+##min_hkg_exp <- min(hkg.sub$mean)
+d.sd.sub <- subset(d.sd.sub, mean>=8)
 
 #subset hkg and common genes
 hkg.sub <- subset(d.sd.sub, d.sd.sub$gene %in% housekeeping)
