@@ -106,8 +106,13 @@ hkg.sub <- dplyr::filter(d.sd, gene %in% housekeeping)
 dplyr::filter(d.sd, gene %in% common_gene)
 
 
+#subset hkg and common genes
+hkg.sub <- subset(d.sd, d.sd$gene %in% housekeeping)
+common.sub <- subset(d.sd, d.sd$gene %in% common_gene)
+
+
 # Set ggplot options globally
-#options(ggrepel.max.overlaps = Inf)
+options(ggrepel.max.overlaps = Inf)
 
 # figure2: sd of all genes (btwn against within)
 qdraw(
@@ -124,53 +129,94 @@ qdraw(
 )  
 
 
-nrow(dplyr::filter(d.sd, mean>=8)) # 9137 genes
-
 # subset all genes whose within_sd < 0.8
 d.sd.sub <- subset(d.sd, within_sd < 0.8)
-nrow(dplyr::filter(d.sd.sub, mean>=8)) # 6779 genes
 
+# mean expression of d.sd and d.sd.sub
+qdraw(
+  ggplot(d.sd, aes(x=within_sd, y=mean, label=gene))+
+    #geom_text_repel() +
+    geom_point(alpha=0.1)+
+    geom_point(data= hkg.sub, aes(x=within_sd, y=mean), color="red")+
+    geom_label_repel(data = hkg.sub, color="red",label.padding = 0.1, segment.curvature=-1e-20, segment.square = TRUE)+
+    theme_minimal()
+  ,
+  width = 8, height = 8,
+  file = "mean_exp_all_genes.png"
+)
+
+qdraw(
+  ggplot(d.sd.sub, aes(x=within_sd, y=mean, label=gene))+
+    geom_point(alpha=0.1)+
+    geom_point(data= hkg.sub, aes(x=within_sd, y=mean), color="red")+
+    geom_label_repel(data = hkg.sub, color="red",label.padding = 0.1, segment.curvature=-1e-20, segment.square = TRUE)+
+    theme_minimal()
+  ,
+  width = 8, height = 8,
+  file = "mean_exp_all_genes_within_less_than_0.8.png"
+)
+
+# check how many genes are mean > 8
+nrow(dplyr::filter(d.sd, mean>=8)) # 9137 genes
+nrow(dplyr::filter(d.sd.sub, mean>=8)) # 6779 genes: within_sd < 0.8 AND mean > 8
 
 
 # remove genes with very low expression (remove if <8)
 ##min_hkg_exp <- min(hkg.sub$mean)
 d.sd.sub <- subset(d.sd.sub, mean>=8)
 
-#subset hkg and common genes
-hkg.sub <- subset(d.sd.sub, d.sd.sub$gene %in% housekeeping)
-common.sub <- subset(d.sd, d.sd$gene %in% common_gene)
-
-dim(d.sd.sub)
-
-library(io)
-#within_sd <0.8
 qdraw(
-  ggplot(d.sd.sub, aes(x=within_sd, y=between_sd, label=gene))+
-    #geom_text_repel() +
-    geom_point(alpha=0.1) + coord_fixed() +
-    geom_point(data= hkg.sub, aes(color=gene))+
-    geom_label_repel(data = hkg.sub, aes(color=gene),label.padding = 0.1)+
-    geom_abline(intercept=0, slope = sqrt((N - K) / (N - K - 2)))+
+  ggplot(d.sd.sub, aes(x=within_sd, y=mean, label=gene))+
+    geom_point(alpha=0.1)+
+    geom_point(data= hkg.sub, aes(x=within_sd, y=mean), color="red")+
+    geom_label_repel(data = hkg.sub, color="red",label.padding = 0.1, segment.curvature=-1e-20, segment.square = TRUE)+
     theme_minimal()
   ,
   width = 8, height = 8,
-  file = "within_sd_less_than_0.8.png"
+  file = "mean_expression_withinlessthan0.8_meangreaterthan8.png"
 )
 
+
+#plot within_sd agains btwn (within_sd <0.8, mean>=8)
+qdraw(
+  ggplot(d.sd.sub, aes(x=within_sd, y=between_sd))+
+    ggtitle("Between group SD against Within group SD")+
+    geom_point(alpha = 0.9, size =0.5)+
+    geom_point(data= hkg.sub, color="red")+
+    geom_label_repel(data = hkg.sub, aes(label=gene), color="red", label.padding = 0.1, max.overlaps = Inf, segment.curvature=-1e-20, segment.square = TRUE)+
+    theme(plot.title = element_text(hjust = 0.5))+
+    theme_linedraw()+
+    geom_abline(intercept=0, slope=sqrt((N - K) / (N - K - 2))),
+  width = 8, height = 8,
+  file = "plot_genes_in_range.png"
+)  
+
+
+
+
+
+
+
+
+
+
 #within_sd < 0.25
-ggplot(subset(d.sd.sub, within_sd < 0.25), aes(x=within_sd, y=between_sd, label=gene))+
-  geom_label_repel() +
-  geom_point() + coord_fixed() +
-  geom_point(hkg.sub, mapping=aes(color="red"))+ geom_label_repel(hkg.sub, mapping=aes(color="red"),label.padding = 0.1)+
-  geom_point(common.sub, mapping=aes(color="blue"))+ geom_label(common.sub, mapping=aes(color="blue"))+
-  geom_abline(yintercept=0, slope = sqrt((N - K) / (N - K - 2)))
+ggplot(subset(d.sd.sub, within_sd < 0.7), aes(x=within_sd, y=between_sd))+
+  geom_point() + #coord_fixed() +
+  geom_point(hkg.sub, aes(x=within_sd, y=between_sd, color="red"))+
+  geom_label_repel(data = hkg.sub, aes(label=gene), color="red", label.padding = 0.1, max.overlaps = Inf, segment.curvature=-1e-20, segment.square = TRUE)+
+  #geom_point(common.sub, mapping=aes(color="blue"))+
+  geom_label_repel(data =common.sub, color="blue")+
+  geom_abline(intercept=0, slope = sqrt((N - K) / (N - K - 2)))
 
 
 #mean expression of genes
 ggplot(subset(d.sd.sub, within_sd < 0.25), aes(x=within_sd, y=mean, label=gene))+
   geom_label_repel() +
   geom_point() +
-  geom_point(hkg.sub, mapping=aes(color="red"))+ geom_label_repel(hkg.sub, mapping=aes(color="red"),label.padding = 0.1)+
-  geom_point(common.sub, mapping=aes(color="blue"))+ geom_label(common.sub, mapping=aes(color="blue"))
+  geom_point(hkg.sub, mapping=aes(color="red"))+
+  geom_label_repel(hkg.sub, mapping=aes(color="red"),label.padding = 0.1)+
+  geom_point(common.sub, mapping=aes(color="blue"))+ 
+  geom_label(common.sub, mapping=aes(color="blue"))
 
 
