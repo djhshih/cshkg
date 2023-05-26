@@ -46,13 +46,14 @@ sum(is.na(pheno$group))
 
 plot_1_df <- data.frame("filter" = factor(c("before", "after"), levels = c("before", "after")), "number_of_group" = c(no.groups.before, no.groups.after))
 
-
 ggplot(data = plot_1_df, aes(x = filter, y = number_of_group))+ 
   ggtitle("Number of groups before and after filtering")+
   theme(plot.title = element_text(hjust = 0.5))+
   xlab("filtering") + ylab("number of groups")+
-  geom_bar(stat = "identity") + theme_minimal()+ 
+  geom_bar(position="stack",stat = "identity") + 
+  theme_minimal()+ 
   geom_text(aes(label= number_of_group), vjust=-1)
+
 
 
 stopifnot(pheno$sample_id == colnames(mat))
@@ -101,8 +102,8 @@ between_sd.problematic <- sqrt(sum((gmean.problematic-overall_mean)^2, na.rm=TRU
 housekeeping <- c("ACTB", "UBC", "GAPDH", "TBP", "RPS18", 
                   "G6PD", "HPRT1", "LDHA", "RPLP1","RPL19",
                   "RPL18", "RPL11","RPL32", "PGK1", "PPIA", 
-                  "RPS18","ASNS","ATP2B4", "PEX19","RXRA",
-                  "RPL13A","PPIA","SDHA","PPIA")  # TODO: Add more!
+                  "SDHA","ASNS","ATP2B4", "PEX19","RXRA",
+                  "RPL13A")  # TODO: Add more!
 common_gene <- c("TP53","EGFR","AKT1")
 
 hkg.sub <- dplyr::filter(d.sd, gene %in% housekeeping)
@@ -118,7 +119,7 @@ options(ggrepel.max.overlaps = Inf)
 qdraw(
   ggplot(d.sd, aes(x=within_sd, y=between_sd))+
     ggtitle("Between group SD against Within group SD")+
-    geom_point(alpha = 0.9, size =0.5)+
+    geom_point(alpha = 0., size =0.5)+
     geom_point(data= hkg.sub, color="red")+
     geom_label_repel(data = hkg.sub, aes(label=gene), color="red", label.padding = 0.1, max.overlaps = Inf, segment.curvature=-1e-20, segment.square = TRUE)+
     theme(plot.title = element_text(hjust = 0.5))+
@@ -183,7 +184,8 @@ qdraw(
 
 # check how many genes are mean > 8
 nrow(dplyr::filter(d.sd, mean>=8)) # 9137 genes
-nrow(dplyr::filter(d.sd.sub, mean>=8)) # 6779 genes: within_sd < 0.8 AND mean > 8
+nrow(dplyr::filter(d.sd.sub, mean>=8)) # 6779 genes: within_sd < 0.8 AND mean > =8
+# 7785 genes: within_sd <1.0 AND mean >=8
 
 # remove genes with very low expression (remove if <8)
 ##min_hkg_exp <- min(hkg.sub$mean)
@@ -250,6 +252,7 @@ expr.mean <- mean(expr.d$expr);
 plot_gene(expr.d, expr.mean)
 # expressed more highly in tumour tissues
 
+
 expr.d.no.nt <- filter(expr.d, sample_type != "NT");
 plot_gene(expr.d.no.nt, expr.mean) +
   labs(subtitle = make_sd_subtitle(expr.d, expr.d.no.nt))
@@ -309,3 +312,31 @@ expr.d.sel <- filter(expr.d, ! group %in% group.exclude);
 plot_gene(expr.d.sel, mean(expr.d.sel$expr)) +
   labs(subtitle = make_sd_subtitle(expr.d, expr.d.sel))
 
+
+gene <- "UBC";
+
+expr.d <- data.frame(pheno, expr = mat[gene, ]);
+expr.mean <- mean(expr.d$expr);
+
+plot_gene(expr.d, expr.mean)
+# upregulated in KIRC-TP, HNSC-TP
+# downregulated in UVM-TP, LAML-TB, READ-TP
+
+group.exclude <- c("HNSC-TP", "KIRC-TP", "UVM-TP", "LAML-TB","READ-TP");
+expr.d.sel <- filter(expr.d, ! group %in% group.exclude);
+plot_gene(expr.d.sel, mean(expr.d.sel$expr)) +
+  labs(subtitle = make_sd_subtitle(expr.d, expr.d.sel))
+
+gene <- "ACTB";
+
+expr.d <- data.frame(pheno, expr = mat[gene, ]);
+expr.mean <- mean(expr.d$expr);
+
+plot_gene(expr.d, expr.mean)
+# upregulated in DLBC-TP, LUAD-NT, LUSC-NT
+# downregulated in PCPG-TP, PRAD-TP, KIRC-NT, LIHC-NT
+
+group.exclude <- c("DLBC-TP", "LUAD-NT", "LUSC-NT","PRAD-TP", "PCPG-TP", "KIRC-NT", "LIHC-NT");
+expr.d.sel <- filter(expr.d, ! group %in% group.exclude);
+plot_gene(expr.d.sel, mean(expr.d.sel$expr)) +
+  labs(subtitle = make_sd_subtitle(expr.d, expr.d.sel))
