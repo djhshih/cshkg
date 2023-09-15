@@ -1,9 +1,12 @@
 # Context-specific house keeping genes
 
 ## Purpose
+
 The purpose of this project lies in analysing the expression levels of various genes of different tissues and discovering a "context-specific" housekeeping gene. "Context-specific" refers to consistency in the gene expression across different cell types, disease and developmental stage. 
 
 ## Set up
+
+### SSH
 
 SSH key
 A public key was set and saved in /home/yerihan/.ssh/id_ed25519.pub
@@ -23,6 +26,8 @@ git config --global user.email "hanyeri0223@gmail.com"
 git config --global user.name "Yeri Han"
 ```
 
+### Rstudio
+
 On Fedora 36, install ...
 ```
 sudo dnf install rstudio-desktop
@@ -32,77 +37,86 @@ Developmental files-devel, R header files
 sudo dnf install make automake gcc gcc-c++ kernel-devel
 sudo dnf install R-core-devel R-java-devel libRmath-devel
 ```
-Install R packages
 
-For preprocessing:
+### R packages
 
-* BioConductor
-* BiocManager
-* annotate
-* tidyverse: include read_tsv() function, packages including "ragg" and "textshaping" had to be installed separately and directly on the terminal due to configuration fails.
-* hgu133a.db: human genome u133a expression array annotation data
 * io: read from, write to, plot to in an unified manner
+* ggplot2
+* dplyr
+* annotate
+* hgu133a.db: human genome u133a expression array annotation data
+
+Bioconductor packages
 ```
-install.packages("io")
+install.packages("BiocManager")
 BiocManager::install(c("annotate", "hgu133a.db"))
 ```
 
-For Analysis
+CRAN packages
 ```
-install.packages(c("ggplot2","dplyr")
+install.packages(c("io", "ggplot2", "dplyr"))
 ```
 
-### Remarks
-Bioconductor packages could not be downloaded completely at first because R was an older 
-version and the outdated packages were relocated to a backup server, taking too much time to be retrieved. Both Fedora and R are updated and biocManager packages were then be able to be downloaded. 
-[Guide on updating Fedora](https://docs.fedoraproject.org/en-US/quick-docs/dnf-system-upgrade/)
+## Datasets
 
-[1-3-2023] loaded data in rds file to ease handling on RStudio.
+This repo is organized by different datasets:
 
-
-## Analysis
-Set R directory: 
-```
-[Session]-[Set Working Directory]-[To Source file location]
-```
-Preprocess the data
 1. biogps
 2. pancan
-<br />[1-3-2023] explore.R: grouping samples into sample type and cancer type; removed rare samples with group frequency <10
+3. gtex
 
-Calculate variations within and between the groups
+## Download and preprocess data
 
-For each gene, between group standard deviation
+`cd` to the `data` subdirectory.
+
+Within a dataset directory, run `./get.sh`.
+
+Prepare the data by running `Rscript preprocess.R`.
+
+## Analysis
+
+Set R working directory to be the same as the script.
 ```
-sd= √(〖∑_g▒〖(m_g-m ̅ 〗)〗^2/(G-1))
-m ̅=  1/G ∑_(g=1)^G▒m_g 
-G=number of groups
-m_g=mean expression of group g
-N_g=number of genes
-
-```
-For a group, within group standard deviation
-```
-sd= √((∑_g▒〖(x_i^((g))-x ̅^((g)))〗^2 )/((∑_g▒〖N_g)〗-1))  
-x ̅^((g))=mean expression in all the samples within group g
-x ̅^((g))=  1/N_g  ∑_(i=1)^(N_g)▒X_i^((g)) 
-N_g=number of samples
-X_i^((g))=expression in sample 1 within group g
-
+[Session] -> [Set Working Directory] -> [To Source file location]
 ```
 
+Then, run `analyze.R` in pancan.
 
-## Download data
-run get.sh
-27/01/2023 removed zip file after unzipping
+## Mathematcis
 
-run get.sh to download pancan data
-14/02/2023
+We calculate variations within and between the groups as follows.
+
+For each gene, between-group standard deviation `\sigma_{bw}` is calculated as
+```
+\sigma_{bw} = \sqrt{ (\sum_g^G m_g - \bar{m})^2 / (G - 1) }
+\bar{m} = \frac{1}{G} \sum_g^G m_g
+```
+where `G` is the number of groups,
+and `m_g` is the mean expression within group `g`.
+
+The within group standard deviation `\sigma_{wi}` is calculated by
+```
+\sigma_{wi} = \sqrt{ (\sum_g^G ((x_i^{(g)} - \bar{x}^{(g)})^2) / ( \sum_g^G N_g - 1 )  }
+\bar{x}^{(g)} = \frac{1}{N_g} \sum_i^{N_g} x_i^{(g)}
+```
+where `N_g` is the number of samples within group `g`, and
+`x_i^{(g)}` is the expression of sample `i` within group `g`.
 
 ## Git
+
 * add: take modified file from working directory to Git index (staging area)
 * commit: creates a new revision log, you can only commit after you add
 * push: add the change to the GitHub
 * diff: outputs the difference between two inputs
 
 [Guide on Git](https://rogerdudler.github.io/git-guide/)
+
+## Troubleshooting
+
+### Bioconductor
+
+Bioconductor packages could not be downloaded completely at first because R was an older 
+version and the outdated packages were relocated to a backup server, taking too much time to be retrieved.  
+Both Fedora and R are updated and biocManager packages were then be able to be downloaded. 
+[Guide on updating Fedora](https://docs.fedoraproject.org/en-US/quick-docs/dnf-system-upgrade/)
+
