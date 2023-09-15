@@ -5,12 +5,12 @@ library(dplyr)
 library(ggsci)
 
 #import functions to calculate standard deviation
-source("sd_function.R")
+source("R/sd_function.R")
 
-proj.info <- qread("../annot/sample-project-info_pancan.tsv")
-type.info <- qread("../annot/sample-type-code_tcga.tsv")
+proj.info <- qread("annot/sample-project-info_pancan.tsv")
+type.info <- qread("annot/sample-type-code_tcga.tsv")
 
-x <- qread("expr_pancan.rds")
+x <- qread("data/expr_pancan.rds")
 mat0 <- x$data;
 mat <- mat0
 
@@ -84,8 +84,8 @@ d.sd <- data.frame(
   gene = genes, within_sd = within_sds, between_sd = between_sds, mean = means
 );
 
-qwrite(d.sd, "sds.rds");
-#d.sd <- qread("sds.rds") # load d.sd 
+qwrite(d.sd, "out/sds.rds");
+#d.sd <- qread("out/sds.rds") # load d.sd 
 
 # SSX9P has many NA and some groups have only NA
 # for groups with all missing value, the mean is NaN
@@ -127,7 +127,7 @@ qdraw(
     geom_abline(intercept=0, slope=sqrt((N - K) / (N - K - 2)),
       color="grey60"),
   width = 8, height = 8,
-  file = "sd_all_genes_with_hkg_highlights2.png"
+  file = "plots/sd_all_genes_with_hkg_highlights2.png"
 )  
 
 d.sd.sub <- subset(d.sd, within_sd < 1)
@@ -142,7 +142,7 @@ qdraw(
     theme_minimal()
   ,
   width = 8, height = 8,
-  file = "mean_exp_all_genes.png"
+  file = "plots/mean_exp_all_genes.png"
 )
 
 lapply(d.sd[, -1], mean)
@@ -150,8 +150,8 @@ lapply(hkg.sub[, -1], mean)
 
 candidate.hkg <- filter(d.sd, mean > 12, within_sd < 0.5, between_sd < 0.5);
 dim(candidate.hkg)
-qwrite(candidate.hkg$gene, "candidate-hkg.vtr");
-qwrite(candidate.hkg, "candidate-hkg.csv");
+qwrite(candidate.hkg$gene, "out/candidate-hkg.vtr");
+qwrite(candidate.hkg, "out/candidate-hkg.csv");
 
 candidate.hkg.top <- filter(candidate.hkg, within_sd < 0.35)
 
@@ -179,7 +179,7 @@ qdraw(
     theme_minimal()
   ,
   width = 8, height = 8,
-  file = "mean-vs-within-sd_within.png"
+  file = "plots/mean-vs-within-sd_within.png"
 )
 
 # check how many genes are mean > 8
@@ -210,7 +210,7 @@ qdraw(
     geom_abline(intercept=0, slope=sqrt((N - K) / (N - K - 2)),
       color="grey60"),
   width = 8, height = 8,
-  file = "sd_high-expr-genes.png"
+  file = "plots/sd_high-expr-genes.png"
 )  
 
 # ---
@@ -340,3 +340,4 @@ group.exclude <- c("DLBC-TP", "LUAD-NT", "LUSC-NT","PRAD-TP", "PCPG-TP", "KIRC-N
 expr.d.sel <- filter(expr.d, ! group %in% group.exclude);
 plot_gene(expr.d.sel, mean(expr.d.sel$expr)) +
   labs(subtitle = make_sd_subtitle(expr.d, expr.d.sel))
+
