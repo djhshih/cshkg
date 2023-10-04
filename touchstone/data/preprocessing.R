@@ -1,9 +1,9 @@
 library(cmapR)
-my_ds <- parse_gctx("touchstone/data/GSE92742_Broad_LINCS_Level2_GEX_delta_n49216x978.gctx")
+my_ds <- parse_gctx("data/GSE92742_Broad_LINCS_Level2_GEX_delta_n49216x978.gctx")
 # sample info
-GSE92742_inst_info <- read.delim("touchstone/data/GSE92742_Broad_LINCS_inst_info.txt")
+GSE92742_inst_info <- read.delim("data/GSE92742_Broad_LINCS_inst_info.txt")
 # gene info
-GSE92742_gene_info_delta_landmark <- read.delim("touchstone/data/GSE92742_Broad_LINCS_gene_info_delta_landmark.txt")
+GSE92742_gene_info_delta_landmark <- read.delim("data/GSE92742_Broad_LINCS_gene_info_delta_landmark.txt")
 
 # Touchstone Dataset Metadata
 touchstone_data <- my_ds@mat

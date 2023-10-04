@@ -1,0 +1,10 @@
+*.DS_Store
+*.RData
+*.Rhistory
+*.Rproj.user
+*.Rproj
+GSE*
+*.rds
+*.gctx
+*.pdf
+*.png
