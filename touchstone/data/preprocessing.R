@@ -23,10 +23,12 @@ sample_group <- sample_group %>%
   group_by(group) %>% 
   mutate(count_freq = n())
 hist(sample_group$count_freq, breaks = 50, xlim = c(0,50)) # filter sample group frequency less than 10
+
 # Filter sample group
 filter_sample_group <- subset(sample_group, count_freq >= 10)
 length(unique(filter_sample_group$group))
 ## [1] 366: Total 366 groups
+
 # Make group information df with group names and number of samples in each group
 sample_group_info <- filter_sample_group[,c(2,3)]
 sample_group_info <- unique(sample_group_info[c("group", "count_freq")])
@@ -45,3 +47,5 @@ all(rownames(touchstone_df) == GSE92742_gene_info_delta_landmark$pr_gene_id) #TR
 rownames(touchstone_df) <- GSE92742_gene_info_delta_landmark$pr_gene_symbol
 touchstone_df <- as.data.frame(touchstone_df)
 all(rownames(touchstone_df) == GSE92742_gene_info_delta_landmark$pr_gene_symbol) #TRUE
+
+save(touchstone_df, file = "touchstone_df.RData")
