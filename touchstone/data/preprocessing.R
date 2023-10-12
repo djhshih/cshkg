@@ -49,3 +49,4 @@ touchstone_df <- as.data.frame(touchstone_df)
 all(rownames(touchstone_df) == GSE92742_gene_info_delta_landmark$pr_gene_symbol) #TRUE
 
 save(touchstone_df, file = "touchstone_df.RData")
+save(filter_sample_group, file = "filter_sample_group.RData")
