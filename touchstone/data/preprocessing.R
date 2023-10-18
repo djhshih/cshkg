@@ -1,9 +1,9 @@
 library(cmapR)
-my_ds <- parse_gctx("data/GSE92742_Broad_LINCS_Level2_GEX_delta_n49216x978.gctx")
+my_ds <- parse_gctx("GSE92742_Broad_LINCS_Level2_GEX_delta_n49216x978.gctx")
 # sample info
-GSE92742_inst_info <- read.delim("data/GSE92742_Broad_LINCS_inst_info.txt")
+GSE92742_inst_info <- read.delim("GSE92742_Broad_LINCS_inst_info.txt")
 # gene info
-GSE92742_gene_info_delta_landmark <- read.delim("data/GSE92742_Broad_LINCS_gene_info_delta_landmark.txt")
+GSE92742_gene_info_delta_landmark <- read.delim("GSE92742_Broad_LINCS_gene_info_delta_landmark.txt")
 
 # Touchstone Dataset Metadata
 touchstone_data <- my_ds@mat
@@ -45,8 +45,8 @@ GSE92742_gene_info_delta_landmark <- GSE92742_gene_info_delta_landmark[order(mat
 all(rownames(touchstone_df) == GSE92742_gene_info_delta_landmark$pr_gene_id) #TRUE
 ## Convert gene id to gene symbol
 rownames(touchstone_df) <- GSE92742_gene_info_delta_landmark$pr_gene_symbol
-touchstone_df <- as.data.frame(touchstone_df)
+touchstone_df <- as.matrix(touchstone_df)
 all(rownames(touchstone_df) == GSE92742_gene_info_delta_landmark$pr_gene_symbol) #TRUE
 
-save(touchstone_df, file = "touchstone_df.RData")
-save(filter_sample_group, file = "filter_sample_group.RData")
+save(touchstone_df, file = "touchstone_df.rds")
+save(filter_sample_group, file = "filter_sample_group.rds")

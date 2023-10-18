@@ -19,5 +19,5 @@ print(paste("between-group sd: ", between_sd))
 # 3.17352085360015
 
 # FIXME: need ground-truth answer here!
-stopifnot(abs(within_sd - ans[1]) < 1e-7) # Passed!
-stopifnot(abs(between_sd - ans[2]) < 1e-7) # Passed!
+stopifnot(abs(within_sd - ans[1]) < 1e-7); # Passed!
+stopifnot(abs(between_sd - ans[2]) < 1e-7); # Passed!
