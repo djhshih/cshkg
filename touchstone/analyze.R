@@ -50,21 +50,21 @@ saveRDS(SDs_df, "out/sds.rds")
 N <- ncol(touchstone_df)
 K <- length(levels(filter_sample_group$group))
 
-housekeeping <- c("ACTB", "UBC", "GAPDH", "TBP", "RPS18",
-                  "G6PD", "HPRT1", "LDHA", "RPLP1", "RPL19",
-                  "RPL18", "RPL11", "RPL32", "PGK1", "PPIA",
-                  "SDHA", "ASNS", "ATP2B4", "PEX19", "RXRA",
-                  "RPL13A")
+housekeeping <- c("CKB","KTN1","AARS","PXN","PGRMC1","TARS","LRP10","PNP",
+                  "UBE2A","HSD17B10","MYC","DECR1","S100A13","POLR2K","RNH1",
+                  "NCOA3","ADH5","MFSD10","DHRS7","RBM34","IARS2","HEATR1")
+
 hkg <- dplyr::filter(SDs_df, gene %in% housekeeping)
 
 qdraw(
-  ggplot(SDs_df, aes(x = within_sd, y = between_sd),
-    ggtitle("Between group SD against Within group SD") +
-    geom_point(alpha = 0.,size = 0.5) +
-    geom_point(data = hkg, color = "blue"))
-    #theme(plot.title = element_text(hjust = 0.5))+
-    #theme_linedraw() +
-    #  geom_abline(intercept = 0, slope = sqrt((N - K) / (N - K - 2)), color = "forestgreen"),
-    #width = 8, height = 8)
-)
+ ggplot(SDs_df, aes(x = within_sd, y = between_sd),
+   ggtitle("Between group SD against Within group SD") +
+   geom_point(alpha = 0.,size = 0.5) +
+   geom_point(data = hkg, color = "blue")))
+
+# theme(plot.title = element_text(hjust = 0.5))+
+# theme_linedraw() +
+#  geom_abline(intercept = 0, slope = sqrt((N - K) / (N - K - 2)), color = "forestgreen"),
+# width = 8, height = 8)
+# )
 
