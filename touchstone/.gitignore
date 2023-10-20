@@ -9,3 +9,5 @@ GSE*
 *.gctx
 *.pdf
 *.png
+*.xlsx
+*.ipynb
