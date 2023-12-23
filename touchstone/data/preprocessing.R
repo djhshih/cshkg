@@ -1,4 +1,6 @@
 library(cmapR)
+library(tidyr)
+library(dplyr)
 my_ds <- parse_gctx("GSE92742_Broad_LINCS_Level2_GEX_delta_n49216x978.gctx")
 # sample info
 GSE92742_inst_info <- read.delim("GSE92742_Broad_LINCS_inst_info.txt")
@@ -14,11 +16,9 @@ colnames(touchstone_sample)[1] <- "inst_id"
 touchstone_sample <- merge(touchstone_sample,GSE92742_inst_info, by = "inst_id")
 touchstone_sample <- touchstone_sample[,c(1,4:11)]
 # Make sample group names by cell id, perturbagen
-library(tidyr)
 sample_group <- unite(touchstone_sample, group, cell_id, pert_iname, pert_time, sep = "_")
 sample_group <- sample_group[,c(1,3)]
 # Count number of samples in each group
-library(dplyr)
 sample_group <- sample_group %>% 
   group_by(group) %>% 
   mutate(count_freq = n())
@@ -50,3 +50,36 @@ all(rownames(touchstone_df) == GSE92742_gene_info_delta_landmark$pr_gene_symbol)
 
 save(touchstone_df, file = "touchstone_df.rds")
 save(filter_sample_group, file = "filter_sample_group.rds")
+
+# Group Clustering
+library(tidyverse)
+library(cluster)
+library(factoextra)
+library(dendextend)
+# Touchstone Dataset Metadata
+df <- my_ds@mat
+df_sample <- my_ds@cdesc
+# Match sample id
+colnames(df_sample)[1] <- "inst_id"
+df_sample <- merge(df_sample,GSE92742_inst_info, by = "inst_id")
+df_sample <- df_sample[,c(1,4:11)]
+# Make sample group names by cell id, perturbagen
+df_group <- unite(df_sample, group, cell_id, pert_iname, sep = "_")
+df_group <- df_group[,c(1,3)]
+# Count number of samples in each group
+df_group <- df_group %>% 
+  group_by(group) %>% 
+  mutate(count_freq = n())
+# group clustering
+df_rev <- t(df)
+df_rev <- na.omit(df_rev)
+d <- dist(df_rev, method = "euclidean")
+## Agglomerative Hierarchical Clustering
+hc1 <- hclust(d, method = "complete")
+plot(hc1, cex = 0.6, hang = -1)
+# Cut tree
+hc2 <- hclust(d, method = "ward.D2")
+sub_grp <- cutree(hc2, k = 100) # into 100 groups
+plot(hc2, cex = 0.6)
+rect.hclust(hc2, k = 100, border = 2:5)
+fviz_cluster(list(data = df_rev, cluster = sub_grp))
