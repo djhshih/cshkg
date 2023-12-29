@@ -70,16 +70,43 @@ df_group <- df_group[,c(1,3)]
 df_group <- df_group %>% 
   group_by(group) %>% 
   mutate(count_freq = n())
+
 # group clustering
-df_rev <- t(df)
-df_rev <- na.omit(df_rev)
-d <- dist(df_rev, method = "euclidean")
-## Agglomerative Hierarchical Clustering
-hc1 <- hclust(d, method = "complete")
-plot(hc1, cex = 0.6, hang = -1)
-# Cut tree
-hc2 <- hclust(d, method = "ward.D2")
-sub_grp <- cutree(hc2, k = 100) # into 100 groups
-plot(hc2, cex = 0.6)
-rect.hclust(hc2, k = 100, border = 2:5)
-fviz_cluster(list(data = df_rev, cluster = sub_grp))
+library(tidyverse)
+library(cluster)
+library(factoextra)
+library(dendextend)
+# Perform hierarchical clustering on the transposed dataset (samples in rows, genes in columns)
+df_rev <- na.omit(t(df))
+#d <- dist(df_rev)
+#hc <- hclust(d)
+subset_size <- 100
+num_columns <- ncol(df_rev)
+# Ensure that the subset size is not larger than the number of columns
+if (subset_size > num_columns) {
+  stop("Subset size is larger than the number of columns in the dataset.")
+}
+# Create a subset df
+subset_df <- df_rev[, sample(num_columns, size = subset_size, replace = FALSE)]
+install.packages("flashClust")
+library(flashClust)
+# Perform hierarchical clustering using flashClust
+hc <- flashClust(dist(subset_df))
+#hc <- hclust(dist(smaller_subset_df))
+
+# Perform hierarchical clustering on the transposed dataset
+hc <- agnes(df_rev, method = "euclidean")
+
+# Plot the dendrogram
+dend <- as.dendrogram(hc)
+dend <- color_branches(dend, k = 4)
+# Visualize the dendrogram
+plot(dend, main = "Hierarchical Clustering Dendrogram", xlab = "Samples", sub = "")
+
+# Cut the tree to get clusters
+clusters <- cutree(hc, h = 50)  # Adjust the height (h) based on the dendrogram
+dim(df_group)
+length(clusters)
+# Combine the cluster information with your sample grouping data
+result_df <- cbind(df_group, Cluster = clusters)
+
