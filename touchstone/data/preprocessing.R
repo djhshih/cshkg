@@ -19,8 +19,8 @@ touchstone_sample <- touchstone_sample[,c(1,4:11)]
 sample_group <- unite(touchstone_sample, group, cell_id, pert_iname, pert_time, sep = "_")
 sample_group <- sample_group[,c(1,3)]
 # Count number of samples in each group
-sample_group <- sample_group %>% 
-  group_by(group) %>% 
+sample_group <- sample_group %>%
+  group_by(group) %>%
   mutate(count_freq = n())
 hist(sample_group$count_freq, breaks = 50, xlim = c(0,50)) # filter sample group frequency less than 10
 
@@ -50,63 +50,3 @@ all(rownames(touchstone_df) == GSE92742_gene_info_delta_landmark$pr_gene_symbol)
 
 save(touchstone_df, file = "touchstone_df.rds")
 save(filter_sample_group, file = "filter_sample_group.rds")
-
-# Group Clustering
-library(tidyverse)
-library(cluster)
-library(factoextra)
-library(dendextend)
-# Touchstone Dataset Metadata
-df <- my_ds@mat
-df_sample <- my_ds@cdesc
-# Match sample id
-colnames(df_sample)[1] <- "inst_id"
-df_sample <- merge(df_sample,GSE92742_inst_info, by = "inst_id")
-df_sample <- df_sample[,c(1,4:11)]
-# Make sample group names by cell id, perturbagen
-df_group <- unite(df_sample, group, cell_id, pert_iname, sep = "_")
-df_group <- df_group[,c(1,3)]
-# Count number of samples in each group
-df_group <- df_group %>% 
-  group_by(group) %>% 
-  mutate(count_freq = n())
-
-# group clustering
-library(tidyverse)
-library(cluster)
-library(factoextra)
-library(dendextend)
-# Perform hierarchical clustering on the transposed dataset (samples in rows, genes in columns)
-df_rev <- na.omit(t(df))
-#d <- dist(df_rev)
-#hc <- hclust(d)
-subset_size <- 100
-num_columns <- ncol(df_rev)
-# Ensure that the subset size is not larger than the number of columns
-if (subset_size > num_columns) {
-  stop("Subset size is larger than the number of columns in the dataset.")
-}
-# Create a subset df
-subset_df <- df_rev[, sample(num_columns, size = subset_size, replace = FALSE)]
-install.packages("flashClust")
-library(flashClust)
-# Perform hierarchical clustering using flashClust
-hc <- flashClust(dist(subset_df))
-#hc <- hclust(dist(smaller_subset_df))
-
-# Perform hierarchical clustering on the transposed dataset
-hc <- agnes(df_rev, method = "euclidean")
-
-# Plot the dendrogram
-dend <- as.dendrogram(hc)
-dend <- color_branches(dend, k = 4)
-# Visualize the dendrogram
-plot(dend, main = "Hierarchical Clustering Dendrogram", xlab = "Samples", sub = "")
-
-# Cut the tree to get clusters
-clusters <- cutree(hc, h = 50)  # Adjust the height (h) based on the dendrogram
-dim(df_group)
-length(clusters)
-# Combine the cluster information with your sample grouping data
-result_df <- cbind(df_group, Cluster = clusters)
-
