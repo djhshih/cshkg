@@ -27,9 +27,35 @@ dend <- color_branches(dend, k = 10)
 plot(dend, main = "Hierarchical Clustering Dendrogram", xlab = "Samples", sub = "")
 
 # Cut the tree to get clusters
-clusters <- cutree(hc, h = 400000)  # Adjust the height (h) based on the dendrogram
+clusters <- cutree(hc, h = 200000)  # Adjust the height (h) based on the dendrogram
 dim(genes_info)
 length(clusters)
 # Combine the cluster information with your sample grouping data
-result_df <- cbind(genes_info, Cluster = clusters)
-unique(result_df$Cluster) # total 44 groups
+result <- cbind(genes_info, Cluster = clusters)
+unique(result$Cluster) # total 279 groups of genes
+
+# Count frequency of genes in each group
+result <- result %>%
+  group_by(Cluster) %>%
+  mutate(count_freq = n())
+# Filter groups less than 10 genes
+result <- subset(result, count_freq >= 10) # total 516 genes (from 978 genes)
+
+# Convert to gene symbol
+result$id <- as.numeric(result$id)
+gene_info_delta_landmark$pr_gene_id <- as.numeric(gene_info_delta_landmark$pr_gene_id)
+gene_filtered <- gene_info_delta_landmark[na.omit(match(result$id, gene_info_delta_landmark$pr_gene_id)),]
+
+all(result$id == gene_filtered$pr_gene_id) # TRUE
+# When FALSE, sort genes
+# sort_gene <- result$id
+# gene_filtered <- gene_filtered[order(match(gene_filtered$pr_gene_id, sort_gene)),]
+
+rownames(result) <- gene_filtered$pr_gene_symbol
+all(rownames(result) == gene_filtered$pr_gene_symbol) #TRUE
+unique(result$Cluster) # total 20 groups of genes
+
+save(result, file = "result.rds")
+
+# New matrix with clustered groups of genes (98 groups of genes x 49207 samples)
+m_cluster <- m_genes[intersect(rownames(m_genes), rownames(result)),]

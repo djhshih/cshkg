@@ -10,33 +10,34 @@ library(ggsci)
 # import functions to calculate SD (at the same time, calculate mean values)
 source("R/sd_function.R")
 
-load("data/touchstone_df.rds")
-load("data/filter_sample_group.rds")
+load("data/m_genes.rds")
+load("data/samples.rds")
+load("data/result.rds")
 
 # log scale matrix
-touchstone_df <- log(touchstone_df + 1)
-sum(is.na(touchstone_df))
+m_genes <- log(m_genes + 1)
+sum(is.na(m_genes))
 #[1] 0 no NA
 
 # Calculate within-group and between-group SD
-genes <- rownames(touchstone_df)
+genes <- rownames(m_genes)
 
-hist(touchstone_df, breaks=100)
+hist(m_genes, breaks=100)
 
-means <- rowMeans(touchstone_df, na.rm=TRUE)
-groups <- filter_sample_group$group
+means <- rowMeans(m_genes, na.rm=TRUE)
+groups <- samples$group
 
 #debug(get_within.sd)
-#get_within.sd(touchstone_df[genes[1], ], groups)
+#get_within.sd(m_genes[genes[1], ], groups)
 
 within_SDs <- unlist(lapply(genes, function(gene) {
   message(gene)
-  get_within.sd(touchstone_df[gene, ], groups)
+  get_within.sd(m_genes[gene, ], groups)
 }))
 
 between_SDs <- unlist(lapply(genes, function(gene) {
   message(gene)
-  get_btwn.sd(touchstone_df[gene, ], groups)
+  get_btwn.sd(m_genes[gene, ], groups)
 }))
 
 # Make data frame of SD results
@@ -47,8 +48,8 @@ SDs_df <- data.frame(
 saveRDS(SDs_df, "out/sds.rds")
 
 # Figure of within vs between SD
-N <- ncol(touchstone_df)
-K <- length(levels(factor(filter_sample_group$group)))
+N <- ncol(m_genes)
+K <- length(levels(factor(samples$group)))
 
 # Histogram of SDs_df to visualize
 hist(SDs_df$within_sd, breaks = 50, xlim = c(0,1))

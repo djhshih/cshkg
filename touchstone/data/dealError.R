@@ -1,5 +1,5 @@
 # Perform hierarchical clustering on the transposed dataset (samples in rows, genes in columns)
-m_rev <- na.omit(t(m))
+m_rev <- na.omit(t(m));
 #d <- dist(m_rev)
 #hc <- hclust(d) # not working
 # Subset matrix
@@ -8,13 +8,13 @@ num_rows <- nrow(m_rev)
 # Ensure that the subset size is not larger than the number of columns
 if (subset_size > num_rows) {
   stop("Subset size is larger than the number of columns in the dataset.")
-}
+};
 # Error: Error: vector memory exhausted (limit reached?)
 # Sys.setenv("R_MAX_VSIZE" = 32000000000) # not working
 
-subset_m <- m_rev[sample(num_rows, size = subset_size, replace = FALSE),]
-saveRDS(subset_m, file = "subset_m.rds")
-hc <- hclust(dist(as.matrix(subset_m)))
+subset_m <- m_rev[sample(num_rows, size = subset_size, replace = FALSE),];
+saveRDS(subset_m, file = "subset_m.rds");
+hc <- hclust(dist(as.matrix(subset_m)));
 
 library(io)
 
