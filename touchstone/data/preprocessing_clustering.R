@@ -89,9 +89,24 @@ all(sub_result1$id == gene_filtered$pr_gene_id) # TRUE
 rownames(sub_result1) <- gene_filtered$pr_gene_symbol
 all(rownames(sub_result1) == gene_filtered$pr_gene_symbol) #TRUE
 
+# Convert result to data frame
+cluster_df <- sub_result1[3]
+rownames(cluster_df) <- rownames(sub_result1)
+
 save(result, file = "result.rds")
 save(sub_result1, file = "sub_result1.rds")
 
-# New matrix with clustered groups of genes (20 groups of genes x 49207 samples)
-m_cluster <- m_genes[intersect(rownames(m_genes), rownames(sub_result1)),]
-heatmap(m_cluster)
+# Draw heatmap with gene cluster info
+# pheatmap(m_genes, annotation_row = cluster_df) #vector memory exhausted
+# Take a sample of samples
+load("samples.rds")
+library(dplyr)
+library(pheatmap)
+random_samples <- samples %>% sample_n(1)
+m_cluster <- m_genes[intersect(rownames(m_genes), rownames(cluster_df)),
+                     intersect(colnames(m_genes), random_samples$inst_id)]
+# deal Error in cut.default(a, breaks = 100) : 'x' must be numeric
+# m_num <- as.data.frame(lapply(m_cluster,
+#                               function(x) as.numeric(as.character(x))))
+
+pheatmap(m_cluster, annotation_row = cluster_df)
