@@ -92,6 +92,9 @@ all(rownames(sub_result1) == gene_filtered$pr_gene_symbol) #TRUE
 # Convert result to data frame
 cluster_df <- sub_result1[3]
 rownames(cluster_df) <- rownames(sub_result1)
+cluster_df$gene <- rownames(cluster_df)
+cluster_ordered <- cluster_df[order(cluster_df$Cluster_ward),]
+cluster_ordered <- cluster_ordered[1]
 
 save(result, file = "result.rds")
 save(sub_result1, file = "sub_result1.rds")
@@ -105,8 +108,5 @@ library(pheatmap)
 random_samples <- samples %>% sample_n(1)
 m_cluster <- m_genes[intersect(rownames(m_genes), rownames(cluster_df)),
                      intersect(colnames(m_genes), random_samples$inst_id)]
-# deal Error in cut.default(a, breaks = 100) : 'x' must be numeric
-# m_num <- as.data.frame(lapply(m_cluster,
-#                               function(x) as.numeric(as.character(x))))
-
-pheatmap(m_cluster, annotation_row = cluster_df)
+m_ordered <- m_cluster[rownames(cluster_ordered),]
+pheatmap(m_ordered, annotation_row = cluster_ordered)
