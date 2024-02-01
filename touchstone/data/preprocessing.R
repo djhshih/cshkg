@@ -48,5 +48,7 @@ rownames(m_genes) <- gene_info_delta_landmark$pr_gene_symbol
 m_genes <- as.matrix(m_genes)
 all(rownames(m_genes) == gene_info_delta_landmark$pr_gene_symbol) #TRUE
 
+save(m, file = "m.rds")
+save(touchstone_sample, file = "touchstone_sample.rds")
 save(m_genes, file = "m_genes.rds")
 save(samples, file = "samples.rds")
