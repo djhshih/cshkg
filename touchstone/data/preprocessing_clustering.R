@@ -1,25 +1,15 @@
-library(cmapR)
-library(tidyr)
-library(dplyr)
-my_ds <- parse_gctx("GSE92742_Broad_LINCS_Level2_GEX_delta_n49216x978.gctx")
-# sample info
-inst_info <- read.delim("GSE92742_Broad_LINCS_inst_info.txt")
-# gene info
-gene_info_delta_landmark <- read.delim("GSE92742_Broad_LINCS_gene_info_delta_landmark.txt")
-
 # Group Clustering
 library(tidyverse)
 library(cluster)
 library(factoextra)
 library(dendextend)
 # Touchstone Dataset Metadata
-m <- my_ds@mat
-genes_info <- my_ds@rdesc
+load("m.rds")
+load("touchstone_sample.rds")
 
 # Group Clustering
 # Hierarchical clustering (samples in columns, genes in rows)
 d <- dist(m)
-# hc <- hclust(d, method = "complete")
 
 # Plot the dendrogram
 dend <- as.dendrogram(hc)
@@ -46,10 +36,11 @@ map_dbl(methods_, ac)
 clusters <- cutree(hc, h = 200000)  # Adjust the height (h) based on the dendrogram
 clusters1 <- cutree(hc1, h = 3.0e+05)
 clusters2 <- cutree(hc2, h = 200000)
-dim(genes_info)
+dim(touchstone_sample)
 length(clusters)
 # Combine the cluster information with your sample grouping data
-result <- cbind(genes_info, Cluster = clusters, Cluster_ward = clusters1, Cluster_average = clusters2)
+result <- cbind(touchstone_sample, Cluster = clusters, Cluster_ward = clusters1, 
+                Cluster_average = clusters2)
 length(unique(result$Cluster)) # total 279 groups of genes
 length(unique(result$Cluster_ward)) # total 306 groups of genes
 length(unique(result$Cluster_average)) # total 223 groups of genes
@@ -108,5 +99,7 @@ library(pheatmap)
 random_samples <- samples %>% sample_n(1)
 m_cluster <- m_genes[intersect(rownames(m_genes), rownames(cluster_df)),
                      intersect(colnames(m_genes), random_samples$inst_id)]
-m_ordered <- m_cluster[rownames(cluster_ordered),]
-pheatmap(m_ordered, annotation_row = cluster_ordered)
+m_ordered <- log(m_cluster[rownames(cluster_ordered),] + 1)
+# Generating z-scores
+m_ordered <- scale(m_ordered, center = TRUE, scale = TRUE)
+pheatmap(m_ordered, annotation_row = cluster_ordered, cluster_cols = FALSE)

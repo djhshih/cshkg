@@ -78,4 +78,23 @@ row_dend2 <- hc_avg
 heatmap(m_sub, cluster_cols = FALSE, 
         cluster_rows = color_branches(row_dend2, k = 4))
 
+## Number of samples in group clusters are reasonably high in average method.
+## Continue with ward method where k = 4.
 
+grupward <- cutree(hc_w, k = 4)
+table(grupward)
+# Visualize dendogram in colors
+fviz_dend(hc_w, k = 4, cex = 0.5, 
+          color_labels_by_k = TRUE, rect = TRUE)
+result_w <- cbind(rownames(m_genes), Cluster = grupward)
+result_w <- as.data.frame(result_w[,2])
+# Visualization by Heatmap
+pheatmap(m_sub, annotation_row = result_w, cluster_cols = FALSE)
+
+# Create a clustered gene expression matrix
+result_w$gene <- rownames(result_w)
+result_w <- result_w[order(result_w$`result_w[, 2]`),]
+result_w <- result_w[1]
+m_ordered <- m_genes[rownames(result_w),]
+
+save(m_ordered, file = "m_ordered.rds")
