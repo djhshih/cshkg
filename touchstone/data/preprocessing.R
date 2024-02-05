@@ -45,7 +45,8 @@ gene_info_delta_landmark <- gene_info_delta_landmark[order(match(gene_info_delta
 all(rownames(m_genes) == gene_info_delta_landmark$pr_gene_id) #TRUE
 ## Convert gene id to gene symbol
 rownames(m_genes) <- gene_info_delta_landmark$pr_gene_symbol
-m_genes <- as.matrix(m_genes)
+## Data in log scale
+m_genes <- as.matrix(log(m_genes + 1))
 all(rownames(m_genes) == gene_info_delta_landmark$pr_gene_symbol) #TRUE
 
 save(m, file = "m.rds")
