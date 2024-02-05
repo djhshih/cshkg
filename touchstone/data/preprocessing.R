@@ -2,6 +2,8 @@ library(cmapR)
 library(tidyr)
 library(dplyr)
 my_ds <- parse_gctx("GSE92742_Broad_LINCS_Level2_GEX_delta_n49216x978.gctx")
+save(my_ds, file = "my_ds.rds")
+
 # sample info
 inst_info <- read.delim("GSE92742_Broad_LINCS_inst_info.txt")
 # gene info
