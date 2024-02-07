@@ -22,9 +22,20 @@ print("check dataset loading")
 # m_PC3 <- m_genes[, intersect(colnames(m_genes), s_PC3$inst_id)]
 # dim(m_PC3) # 978 genes x 22353 samples
 
-pca_result <- prcomp(t(m_genes), scale. = TRUE)
-summary(pca_result)
+pca_prcomp <- prcomp(t(m_genes), scale = TRUE)
+temp <- prcomp(t(scale(m_genes)))
+head(temp$sdev)
+summary(pca_prcomp)
 
-p_components <- pca_result$x
-pca_df <- as.data.frame(p_components)
-write.table(pca_df, file="pca_results.txt", sep="\t", row.names=FALSE)
+p_components <- pca_prcomp$x
+# pca_df <- as.data.frame(p_components)
+# write.table(pca_df, file="pca_df.txt", sep="\t", row.names=FALSE)
+
+#Plot: Screeplot
+screeplot(pca_prcomp, bstick = TRUE, type = "l", main = NULL)
+
+## Variation of PC1
+pca_var <- pca_prcomp$sdev^2 # show how much variation each PC accounts for
+pca_var_per <- round(pca_var/sum(pca_var)*100, 1) # represent as percentage %
+barplot(pca_var, main = "Scree plot", 
+        xlab = "Principal Component", ylab = "Percent Variation")
