@@ -5,25 +5,55 @@ library(NbClust)
 library(cluster)
 library(dendextend)
 library(pheatmap)
-# Touchstone Matrix with gene names in rows (filtered according to inst info)
+# Load log-scaled Touchstone Matrix with gene names in rows (filtered according to inst info)
 load("m_genes.rds")
-# Convert log scaled matrix to z-scores
-m_genes <- scale(log(m_genes + 1))
+load("m_VCAP.rds")
+load("s_VCAP.rds")
+load("m_MCF7.rds")
+load("s_MCF7.rds")
+load("m_PC3.rds")
+load("s_PC3.rds")
+
+# Prepare matrices for sample clustering
+m_genes <- t(m_genes)
+m_VCAP <- t(m_VCAP)
+m_MCF7 <- t(m_MCF7)
+m_PC3 <- t(m_PC3)
 
 # Hierarchical Clustering
 # 1. Choose Distance Metric
 ## Calculate Euclidean and Manhattan distances
-d_euc <- dist(m_genes, method = "euclidean")
-d_man <- dist(m_genes, method="manhattan")
+d_euc_VCAP <- dist(m_VCAP, method = "euclidean")
+d_man_VCAP <- dist(m_VCAP, method="manhattan")
 ## Hierarchically cluster dataset with both distance metric using ward method
-hc_euc <- hclust(d_euc, method = "ward.D2")
-hc_man <- hclust(d_man, method = "ward.D2")
+hc_euc_VCAP <- hclust(d_euc_VCAP, method = "ward.D2")
+hc_man_VCAP <- hclust(d_man_VCAP, method = "ward.D2")
 ## Check the correlation coefficient (distance metric vs cophenetic distance)
-coph_euc <- cophenetic(hc_euc)
-cor(d_euc, coph_euc) # 0.5411949
-coph_man <- cophenetic(hc_man)
-cor(d_man, coph_man) # 0.5461158
-## Continue the analysis with Manhattan distance metric
+coph_euc_VCAP <- cophenetic(hc_euc_VCAP)
+cor(d_euc_VCAP, coph_euc_VCAP) # 0.4887777
+coph_man_VCAP <- cophenetic(hc_man_VCAP)
+cor(d_man_VCAP, coph_man_VCAP) # 0.4570925
+## Continue the analysis with Euclidean distance metric for VCAP cell type
+# Check for MCF7 cell type
+d_euc_MCF7 <- dist(m_MCF7, method = "euclidean")
+d_man_MCF7 <- dist(m_MCF7, method="manhattan")
+hc_euc_MCF7 <- hclust(d_euc_MCF7, method = "ward.D2")
+hc_man_MCF7 <- hclust(d_man_MCF7, method = "ward.D2")
+coph_euc_MCF7 <- cophenetic(hc_euc_MCF7)
+coph_man_MCF7 <- cophenetic(hc_man_MCF7)
+cor(d_euc_MCF7, coph_euc_MCF7)
+cor(d_man_MCF7, coph_man_MCF7)
+## Continue the analysis with ?? distance metric for MCF7 cell type
+# Check for PC3 cell type
+d_euc_PC3 <- dist(m_PC3, method = "euclidean")
+d_man_PC3 <- dist(m_PC3, method="manhattan")
+hc_euc_PC3 <- hclust(d_euc_PC3, method = "ward.D2")
+hc_man_PC3 <- hclust(d_man_PC3, method = "ward.D2")
+coph_euc_PC3 <- cophenetic(hc_euc_PC3)
+coph_man_PC3 <- cophenetic(hc_man_PC3)
+cor(d_euc_PC3, coph_euc_PC3)
+cor(d_man_PC3, coph_man_PC3)
+## Continue the analysis with ?? distance metric for PC3 cell type
 
 # Determining The Optimal Number Of Clusters (k)
 # Elbow method
@@ -99,3 +129,4 @@ result_w <- result_w[1]
 m_ordered <- m_genes[rownames(result_w),]
 
 save(m_ordered, file = "m_ordered.rds")
+

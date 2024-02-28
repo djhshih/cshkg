@@ -66,6 +66,13 @@ s_PC3 <- samples[which(samples$cell_type == "PC3"),]
 m_PC3 <- m_genes[, intersect(colnames(m_genes), s_PC3$inst_id)]
 dim(m_PC3) # 978 genes x 22353 samples
 
+save(m_VCAP, file = "m_VCAP.rds")
+save(s_VCAP, file = "s_VCAP.rds")
+save(m_MCF7, file = "m_MCF7.rds")
+save(s_MCF7, file = "s_MCF7.rds")
+save(m_PC3, file = "m_PC3.rds")
+save(s_PC3, file = "s_PC3.rds")
+
 # 1. Cell type == "VCAP"
 VCAP_pca_prcomp <- prcomp(t(scale(m_VCAP)), scale = FALSE)
 head(VCAP_pca_prcomp$sdev)
