@@ -140,8 +140,9 @@ VCAP_grp1 <- c("VCAP_EMPTY_VECTOR", "VCAP_PANK4", "VCAP_PAK7", "VCAP_MORN1",
                "VCAP_NME3", "VCAP_LOC441971", "VCAP_LOC392347", "VCAP_PLXNA3", "VCAP_FGGY",
                "VCAP_MEX3B", "VCAP_XRCC6BP1", "VCAP_PNCK", "VCAP_WNK4", "VCAP_IGFN1")
 # Modify sample group and prcomp data
-s_VCAP$group[s_VCAP$group %in% VCAP_grp1] <- "VCAP_grp1"
-VCAP_pca_prcomp_data$group <- as.character(s_VCAP$group)
+s_VCAP$new_group <- s_VCAP$group
+s_VCAP$new_group[s_VCAP$group %in% VCAP_grp1] <- "VCAP_grp1"
+VCAP_pca_prcomp_data$group <- as.character(s_VCAP$new_group)
 sub_VCAP_prcomp <- VCAP_pca_prcomp_data[VCAP_pca_prcomp_data$group != "VCAP_grp1", ]
 # Check for perturbagen starting with BRD-*
 sub_VCAP_prcomp$perturbagen <- sub(".*_", "", sub_VCAP_prcomp$group)
