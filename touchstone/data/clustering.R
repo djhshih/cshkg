@@ -6,6 +6,7 @@ library(cluster)
 library(dendextend)
 library(pheatmap)
 library(tsne)
+library(Rtsne)
 library(plotly)
 # Load log-scaled Touchstone Matrix with gene names in rows (filtered according to inst info)
 load("m_genes.rds")
@@ -22,7 +23,7 @@ m_VCAP <- t(m_VCAP)
 m_MCF7 <- t(m_MCF7)
 m_PC3 <- t(m_PC3)
 
-# Hierarchical Clustering: VCAP
+# Hierarchical Clustering: `VCAP`
 # 1. Choose Distance Metric
 ## Calculate Euclidean and Manhattan distances
 d_euc_VCAP <- dist(m_VCAP, method = "euclidean")
@@ -119,23 +120,34 @@ s_VCAP$new_group <- s_VCAP$group
 s_VCAP$new_group[s_VCAP$group %in% VCAP_clusgrp] <- "VCAP_clusgrp"
 save(s_VCAP, file = "s_VCAP.rds")
 
-# Check for MCF7 cell type
-d_euc_MCF7 <- dist(m_MCF7, method = "euclidean")
-d_man_MCF7 <- dist(m_MCF7, method="manhattan")
-hc_euc_MCF7 <- hclust(d_euc_MCF7, method = "ward.D2") # vector memory exhausted
-hc_man_MCF7 <- hclust(d_man_MCF7, method = "ward.D2")
-coph_euc_MCF7 <- cophenetic(hc_euc_MCF7)
-coph_man_MCF7 <- cophenetic(hc_man_MCF7)
-cor(d_euc_MCF7, coph_euc_MCF7)
-cor(d_man_MCF7, coph_man_MCF7)
-## Continue the analysis with ?? distance metric for MCF7 cell type
-# Check for PC3 cell type
-d_euc_PC3 <- dist(m_PC3, method = "euclidean")
-d_man_PC3 <- dist(m_PC3, method="manhattan")
-hc_euc_PC3 <- hclust(d_euc_PC3, method = "ward.D2")
-hc_man_PC3 <- hclust(d_man_PC3, method = "ward.D2")
-coph_euc_PC3 <- cophenetic(hc_euc_PC3)
-coph_man_PC3 <- cophenetic(hc_man_PC3)
-cor(d_euc_PC3, coph_euc_PC3)
-cor(d_man_PC3, coph_man_PC3)
-## Continue the analysis with ?? distance metric for PC3 cell type
+# Perform t-SNE for `VCAP` cell type
+library(Rtsne)
+## 1. Compute t-SNE embedding for `m_VCAP`
+tsne_VCAP <- Rtsne(m_VCAP, dims = 3, perplexity = 50, verbose = TRUE, max_iter = 500)
+## 2. Visualize t-SNE projections
+tsne_df_VCAP <- as.data.frame(tsne_VCAP$Y)
+plot_ly(data = tsne_df_VCAP, x = ~V1, y = ~V2, z = ~V3, color = s_VCAP$group) |> add_markers(size = 3)
+## 3. Hierarchical clustering using t-SNE embeddings
+tsne_dist_VCAP <- dist(tsne_VCAP$Y)
+hc_tsne_VCAP <- hclust(tsne_dist_VCAP, method = "ward.D2")
+fviz_dend(hc_tsne_VCAP, k = 8, cex = 0.5, 
+          color_labels_by_k = TRUE, rect = TRUE)
+clusters_VCAP <- cutree(hc_tsne_VCAP, k = 8)
+VCAP_tsne_grp <- cbind(rownames(m_VCAP), Cluster = clusters_VCAP)
+rownames(VCAP_tsne_grp) <- VCAP_tsne_grp[,1]
+VCAP_tsne_grp <- as.data.frame(VCAP_tsne_grp[,2])
+# Create a clustered expression matrix
+all(s_VCAP$inst_id == rownames(VCAP_tsne_grp)) # TRUE
+VCAP_tsne_grp$group <- s_VCAP$group
+colnames(VCAP_tsne_grp)[1] <- "cluster_group"
+# m_clus_VCAP <- VCAP_tsne_grp |> group_by(cluster_group)
+
+# Perform t-SNE for `MCF7` cell type
+tsne_MCF7 <- Rtsne(m_MCF7, dims = 3, perplexity = 50, verbose = TRUE, max_iter = 1000)
+tsne_df_MCF7 <- as.data.frame(tsne_MCF7$Y)
+plot_ly(data = tsne_df_MCF7, x = ~V1, y = ~V2, z = ~V3, color = s_MCF7$group) |> add_markers(size = 3)
+
+# Perform t-SNE for `PC3` cell type
+tsne_PC3 <- Rtsne(m_PC3, dims = 3, perplexity = 50, verbose = TRUE, max_iter = 1000)
+tsne_df_PC3 <- as.data.frame(tsne_PC3$Y)
+plot_ly(data = tsne_df_PC3, x = ~V1, y = ~V2, z = ~V3, color = s_PC3$group) |> add_markers(size = 3)
