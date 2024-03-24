@@ -1,6 +1,7 @@
 # Run PCA to select perturbations that give similar effects.
 library(corrr)
 library(ggplot2)
+library(ggrepel)
 library(ggcorrplot)
 library(FactoMineR)
 library(factoextra)
@@ -28,11 +29,6 @@ screeplot(pca_prcomp, bstick = TRUE, type = "l", main = NULL)
           xlab = "Principal Component (PC1~PC50)", ylab = "Percent Variation",
           xlim = c(0,50))
   ## PC1 is regarded as about 28% of variation in the dataset.
-
-# Biplot
-biplot(pca_prcomp, scale = 0, xlabs = rep(".", nrow(t(m_genes))))
-fviz_pca_biplot(pca_prcomp, label = "var", 
-                habillage = samples$group, repel = TRUE) # vector memotry exhausted
 
 # Biploy using ggplot to represent data of PC1 over PC2
 pca_prcomp_data <- data.frame(pca_prcomp$x)
@@ -77,8 +73,6 @@ save(s_PC3, file = "s_PC3.rds")
 VCAP_pca_prcomp <- prcomp(t(scale(m_VCAP)), scale = FALSE)
 head(VCAP_pca_prcomp$sdev)
 summary(VCAP_pca_prcomp)
-
-VCAP_p_components <- VCAP_pca_prcomp$x
 
 # Screeplot
 screeplot(VCAP_pca_prcomp, bstick = TRUE, type = "l", main = NULL)
@@ -164,8 +158,6 @@ MCF7_pca_prcomp <- prcomp(t(scale(m_MCF7)), scale = FALSE)
 head(MCF7_pca_prcomp$sdev)
 summary(MCF7_pca_prcomp)
 
-MCF7_p_components <- MCF7_pca_prcomp$x
-
 # Screeplot
 screeplot(MCF7_pca_prcomp, bstick = TRUE, type = "l", main = NULL)
 
@@ -201,8 +193,6 @@ PC3_pca_prcomp <- prcomp(t(scale(m_PC3)))
 head(PC3_pca_prcomp$sdev)
 summary(PC3_pca_prcomp)
 
-PC3_p_components <- PC3_pca_prcomp$x
-
 # Screeplot
 screeplot(PC3_pca_prcomp, bstick = TRUE, type = "l", main = NULL)
 
@@ -232,3 +222,7 @@ p_pca_PC3 <- ggplot(PC3_pca_prcomp_data, aes(x = plotx, y = ploty, color = group
   stat_ellipse(geom = "polygon", aes(fill = after_scale(alpha(color, 0.01))),
                data = PC3_pca_prcomp_data[PC3_pca_prcomp_data$group != "PC3_UnTrt",])
 p_pca_PC3
+
+save(VCAP_pca_prcomp_data, file = "VCAP_pca_prcomp_data.rds")
+save(MCF7_pca_prcomp_data, file = "MCF7_pca_prcomp_data.rds")
+save(PC3_pca_prcomp_data, file = "PC3_pca_prcomp_data.rds")

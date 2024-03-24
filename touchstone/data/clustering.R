@@ -7,7 +7,11 @@ library(dendextend)
 library(pheatmap)
 library(tsne)
 library(Rtsne)
+library(ggplot2)
+library(ggrepel)
 library(plotly)
+library(igraph)
+library(FNN)
 # Load log-scaled Touchstone Matrix with gene names in rows (filtered according to inst info)
 load("m_genes.rds")
 load("m_VCAP.rds")
@@ -57,7 +61,7 @@ fviz_nbclust(sub_mVCAP, kmeans, k.max = 10,  method = "gap_stat", nboot = 500) +
   labs(subtitle = "Gap statistic method")
 ## Continue the analysis with k = 2 based on PCA result.
 
-# Method 1. Ward's Minimum Variance Method
+# Method: Ward's Minimum Variance Method
 hc_VCAP <- hclust(d_euc_VCAP, method = "ward.D2")
 grupward <- cutree(hc_VCAP, k = 2) # based on PCA result k = 2
 table(grupward)
@@ -66,28 +70,6 @@ fviz_dend(hc_VCAP, k = 2, cex = 0.5,
           color_labels_by_k = TRUE, rect = TRUE)
 result_VCAP <- cbind(rownames(m_VCAP), Cluster = grupward)
 result_VCAP <- as.data.frame(result_VCAP[,2])
-# Visualization by Heatmap
-pheatmap(m_VCAP, annotation_row = result_VCAP, cluster_cols = FALSE)
-row_dend <- hc_VCAP
-heatmap(m_VCAP, cluster_cols = FALSE, 
-        cluster_rows = color_branches(row_dend, k = 2))
-
-# Method 2. Average Linkage Method
-hc_VCAP_avg <- hclust(d_euc_VCAP, method = "average")
-grupavg <- cutree(hc_VCAP_avg, k = 2)
-table(grupavg)
-head(grupavg)
-# Visualize dendogram in colors
-fviz_dend(hc_VCAP_avg, k = 2, cex = 0.5, 
-          color_labels_by_k = TRUE, rect = TRUE)
-result_VCAP_avg <- cbind(rownames(m_VCAP), Cluster = grupavg)
-result_VCAP_avg <- as.data.frame(result_VCAP_avg[,2])
-# Visualization by Heatmap
-pheatmap(m_VCAP, annotation_row = result_VCAP_avg, cluster_cols = FALSE)
-row_dend2 <- hc_VCAP_avg
-heatmap(m_VCAP, cluster_cols = FALSE, 
-        cluster_rows = color_branches(row_dend2, k = 2))
-## Continue with ward method where k = 2.
 
 # Create a clustered expression matrix
 all(s_VCAP$inst_id == rownames(result_VCAP))
@@ -116,38 +98,99 @@ VCAP_clusgrp <- c("VCAP_ACVR2B", "VCAP_BMPR2", "VCAP_PIK3CA", "VCAP_AXL", "VCAP_
                   "VCAP_EEF2K", "VCAP_SH3BP4", "VCAP_GK5", "VCAP_NEK8", "VCAP_MASTL", "VCAP_DGKK",
                   "VCAP_NME3", "VCAP_LOC441971", "VCAP_LOC392347", "VCAP_PLXNA3", "VCAP_FGGY", "VCAP_MEX3B",
                   "VCAP_XRCC6BP1", "VCAP_FLT1", "VCAP_PNCK", "VCAP_WNK4", "VCAP_IGFN1")
-s_VCAP$new_group <- s_VCAP$group
-s_VCAP$new_group[s_VCAP$group %in% VCAP_clusgrp] <- "VCAP_clusgrp"
-save(s_VCAP, file = "s_VCAP.rds")
+s_VCAP$hierarchical_group <- s_VCAP$group
+s_VCAP$hierarchical_group[s_VCAP$group %in% VCAP_clusgrp] <- "VCAP_clusgrp"
+### Use t-SNE and Louvain Clustering method that does not require distance matrix.
 
-# Perform t-SNE for `VCAP` cell type
-library(Rtsne)
-## 1. Compute t-SNE embedding for `m_VCAP`
-tsne_VCAP <- Rtsne(m_VCAP, dims = 3, perplexity = 50, verbose = TRUE, max_iter = 500)
-## 2. Visualize t-SNE projections
-tsne_df_VCAP <- as.data.frame(tsne_VCAP$Y)
-plot_ly(data = tsne_df_VCAP, x = ~V1, y = ~V2, z = ~V3, color = s_VCAP$group) |> add_markers(size = 3)
-## 3. Hierarchical clustering using t-SNE embeddings
-tsne_dist_VCAP <- dist(tsne_VCAP$Y)
-hc_tsne_VCAP <- hclust(tsne_dist_VCAP, method = "ward.D2")
-fviz_dend(hc_tsne_VCAP, k = 8, cex = 0.5, 
-          color_labels_by_k = TRUE, rect = TRUE)
-clusters_VCAP <- cutree(hc_tsne_VCAP, k = 8)
-VCAP_tsne_grp <- cbind(rownames(m_VCAP), Cluster = clusters_VCAP)
-rownames(VCAP_tsne_grp) <- VCAP_tsne_grp[,1]
-VCAP_tsne_grp <- as.data.frame(VCAP_tsne_grp[,2])
-# Create a clustered expression matrix
-all(s_VCAP$inst_id == rownames(VCAP_tsne_grp)) # TRUE
-VCAP_tsne_grp$group <- s_VCAP$group
-colnames(VCAP_tsne_grp)[1] <- "cluster_group"
-# m_clus_VCAP <- VCAP_tsne_grp |> group_by(cluster_group)
+# Continue with t-SNE analysis, using initial reduction through PCA
+load("VCAP_pca_prcomp_data.rds")
+load("MCF7_pca_prcomp_data.rds")
+load("PC3_pca_prcomp_data.rds")
 
-# Perform t-SNE for `MCF7` cell type
-tsne_MCF7 <- Rtsne(m_MCF7, dims = 3, perplexity = 50, verbose = TRUE, max_iter = 1000)
-tsne_df_MCF7 <- as.data.frame(tsne_MCF7$Y)
-plot_ly(data = tsne_df_MCF7, x = ~V1, y = ~V2, z = ~V3, color = s_MCF7$group) |> add_markers(size = 3)
+# 1.`VCAP` cell type
+## a. Compute t-SNE embedding for `m_VCAP`
+tsne_VCAP <- Rtsne(VCAP_pca_prcomp_data, pca = FALSE)
+## b. Visualize t-SNE projections
+tsne_data_VCAP <- s_VCAP[, 1:2]
+tsne_data_VCAP <- tsne_data_VCAP |> ungroup() |> 
+  mutate(tsne1 = tsne_VCAP$Y[, 1], tsne2 = tsne_VCAP$Y[, 2])
+ggplot(tsne_data_VCAP, aes(x = tsne1, y = tsne2, colour = group)) + 
+  geom_point(alpha = 0.3) + theme(legend.position = "none") +
+  labs(x = "tSNE dimension 1", y = "tSNE dimension 2",
+        title = "tSNE result of VCAP cell type colored by perturbation type")
+plot_ly(data = tsne_data_VCAP, x = ~tsne1, y = ~tsne2, color = ~group) |> add_markers(size = 3)
+### k >= 12 for `VCAP` cell type
+## c. Louvain clustering
+knn_VCAP <- get.knn(as.matrix(tsne_VCAP$Y), k = 12)
+knn_VCAP <- data.frame(from = rep(1:nrow(knn_VCAP$nn.index), 12), 
+                       to = as.vector(knn_VCAP$nn.index), 
+                       weight = 1/(1 + as.vector(knn_VCAP$nn.dist)))
+nw_VCAP <- graph_from_data_frame(knn_VCAP, directed = FALSE)
+nw_VCAP <- simplify(nw_VCAP)
+lc_VCAP <- cluster_louvain(nw_VCAP)
+tsne_data_VCAP$louvain_group <- as.factor(membership(lc_VCAP))
+lc_data_VCAP <- tsne_data_VCAP |> group_by(louvain_group) |> 
+  select(tsne1,tsne2) |> summarize_all(mean)
+ggplot(tsne_data_VCAP, aes(x = tsne1, y = tsne2, colour = louvain_group)) + 
+  geom_point(alpha = 0.3) + theme_bw() + 
+  geom_label_repel(aes(label = louvain_group), data = lc_data_VCAP) + 
+  guides(colour = FALSE) + labs(x = "tSNE dimension 1", y = "tSNE dimension 2",
+                                title = "Result of Louvain Clustering of VCAP cell type")
 
-# Perform t-SNE for `PC3` cell type
-tsne_PC3 <- Rtsne(m_PC3, dims = 3, perplexity = 50, verbose = TRUE, max_iter = 1000)
-tsne_df_PC3 <- as.data.frame(tsne_PC3$Y)
-plot_ly(data = tsne_df_PC3, x = ~V1, y = ~V2, z = ~V3, color = s_PC3$group) |> add_markers(size = 3)
+# 2.`MCF7` cell type
+## a. t-SNE
+tsne_MCF7 <- Rtsne(MCF7_pca_prcomp_data, pca = FALSE)
+tsne_data_MCF7 <- s_MCF7[, 1:2]
+tsne_data_MCF7 <- tsne_data_MCF7 |> ungroup() |> 
+  mutate(tsne1 = tsne_MCF7$Y[, 1], tsne2 = tsne_MCF7$Y[, 2])
+ggplot(tsne_data_MCF7, aes(x = tsne1, y = tsne2, colour = group)) + 
+  geom_point(alpha = 0.3) + theme(legend.position = "none") +
+  labs(x = "tSNE dimension 1", y = "tSNE dimension 2",
+       title = "tSNE result of MCF7 cell type colored by perturbation type")
+plot_ly(data = tsne_data_MCF7, x = ~tsne1, y = ~tsne2, color = ~group) |> add_markers(size = 3)
+### k >= 30 for `MCF7` cell type
+## b. Louvain clustering
+knn_MCF7 <- get.knn(as.matrix(tsne_MCF7$Y), k = 30)
+knn_MCF7 <- data.frame(from = rep(1:nrow(knn_MCF7$nn.index), 30), 
+                      to = as.vector(knn_MCF7$nn.index), 
+                      weight = 1/(1 + as.vector(knn_MCF7$nn.dist)))
+nw_MCF7 <- graph_from_data_frame(knn_MCF7, directed = FALSE)
+nw_MCF7 <- simplify(nw_MCF7)
+lc_MCF7 <- cluster_louvain(nw_MCF7)
+tsne_data_MCF7$louvain_group <- as.factor(membership(lc_MCF7))
+lc_data_MCF7 <- tsne_data_MCF7 |> group_by(louvain_group) |> 
+  select(tsne1,tsne2) |> summarize_all(mean)
+ggplot(tsne_data_MCF7, aes(x = tsne1, y = tsne2, colour = louvain_group)) + 
+  geom_point(alpha = 0.3) + theme_bw() + 
+  geom_label_repel(aes(label = louvain_group), data = lc_data_MCF7) +
+  guides(colour = FALSE) + labs(x = "tSNE dimension 1", y = "tSNE dimension 2",
+                                title = "Result of Louvain Clustering of MCF7 cell type")
+
+# 3.`PC3` cell type
+## a. t-SNE
+tsne_PC3 <- Rtsne(PC3_pca_prcomp_data, pca = FALSE)
+tsne_data_PC3 <- s_PC3[, 1:2]
+tsne_data_PC3 <- tsne_data_PC3 |> ungroup() |> 
+  mutate(tsne1 = tsne_PC3$Y[, 1], tsne2 = tsne_PC3$Y[, 2])
+ggplot(tsne_data_PC3, aes(x = tsne1, y = tsne2, colour = group)) + 
+  geom_point(alpha = 0.3) + theme(legend.position = "none") +
+  labs(x = "tSNE dimension 1", y = "tSNE dimension 2",
+       title = "tSNE result of PC3 cell type colored by perturbation type")
+plot_ly(data = tsne_data_PC3, x = ~tsne1, y = ~tsne2, color = ~group) |> add_markers(size = 3)
+### k >= 41 for `PC3` cell type
+## b. Louvain clustering
+knn_PC3 <- get.knn(as.matrix(tsne_PC3$Y), k = 41)
+knn_PC3 <- data.frame(from = rep(1:nrow(knn_PC3$nn.index), 41), 
+                       to = as.vector(knn_PC3$nn.index), 
+                       weight = 1/(1 + as.vector(knn_PC3$nn.dist)))
+nw_PC3 <- graph_from_data_frame(knn_PC3, directed = FALSE)
+nw_PC3 <- simplify(nw_PC3)
+lc_PC3 <- cluster_louvain(nw_PC3)
+tsne_data_PC3$louvain_group <- as.factor(membership(lc_PC3))
+lc_data_PC3 <- tsne_data_PC3 |> group_by(louvain_group) |> 
+  select(tsne1,tsne2) |> summarize_all(mean)
+ggplot(tsne_data_PC3, aes(x = tsne1, y = tsne2, colour = louvain_group)) + 
+  geom_point(alpha = 0.3) + theme_bw() + 
+  geom_label_repel(aes(label = louvain_group), data = lc_data_PC3) +
+  guides(colour = FALSE) + labs(x = "tSNE dimension 1", y = "tSNE dimension 2",
+                                title = "Result of Louvain Clustering of PC3 cell type")
