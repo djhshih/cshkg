@@ -1,7 +1,6 @@
 # Sample Group Clustering
 library(dplyr)
 library(factoextra)
-library(NbClust)
 library(cluster)
 library(dendextend)
 library(pheatmap)
@@ -71,7 +70,7 @@ fviz_dend(hc_VCAP, k = 2, cex = 0.5,
 result_VCAP <- cbind(rownames(m_VCAP), Cluster = grupward)
 result_VCAP <- as.data.frame(result_VCAP[,2])
 
-# Create a clustered expression matrix
+# Create new sample groups based on hierarchical clustering result for `VCAP` cell type
 all(s_VCAP$inst_id == rownames(result_VCAP))
 result_VCAP$group <- s_VCAP$group
 colnames(result_VCAP)[1] <- "cluster_group"
@@ -100,6 +99,7 @@ VCAP_clusgrp <- c("VCAP_ACVR2B", "VCAP_BMPR2", "VCAP_PIK3CA", "VCAP_AXL", "VCAP_
                   "VCAP_XRCC6BP1", "VCAP_FLT1", "VCAP_PNCK", "VCAP_WNK4", "VCAP_IGFN1")
 s_VCAP$hierarchical_group <- s_VCAP$group
 s_VCAP$hierarchical_group[s_VCAP$group %in% VCAP_clusgrp] <- "VCAP_clusgrp"
+### Hierarchical clustering function cannot be runned for `MCF7` and `PC3` matrixes.
 ### Use t-SNE and Louvain Clustering method that does not require distance matrix.
 
 # Continue with t-SNE analysis, using initial reduction through PCA
@@ -121,8 +121,8 @@ ggplot(tsne_data_VCAP, aes(x = tsne1, y = tsne2, colour = group)) +
 plot_ly(data = tsne_data_VCAP, x = ~tsne1, y = ~tsne2, color = ~group) |> add_markers(size = 3)
 ### k >= 12 for `VCAP` cell type
 ## c. Louvain clustering
-knn_VCAP <- get.knn(as.matrix(tsne_VCAP$Y), k = 12)
-knn_VCAP <- data.frame(from = rep(1:nrow(knn_VCAP$nn.index), 12), 
+knn_VCAP <- get.knn(as.matrix(tsne_VCAP$Y), k = 16)
+knn_VCAP <- data.frame(from = rep(1:nrow(knn_VCAP$nn.index), 16), 
                        to = as.vector(knn_VCAP$nn.index), 
                        weight = 1/(1 + as.vector(knn_VCAP$nn.dist)))
 nw_VCAP <- graph_from_data_frame(knn_VCAP, directed = FALSE)
@@ -194,3 +194,66 @@ ggplot(tsne_data_PC3, aes(x = tsne1, y = tsne2, colour = louvain_group)) +
   geom_label_repel(aes(label = louvain_group), data = lc_data_PC3) +
   guides(colour = FALSE) + labs(x = "tSNE dimension 1", y = "tSNE dimension 2",
                                 title = "Result of Louvain Clustering of PC3 cell type")
+
+# Save the outcomes of clustered groups
+save(tsne_data_VCAP, file = "tsne_data_VCAP.rds")
+save(tsne_data_MCF7, file = "tsne_data_MCF7.rds")
+save(tsne_data_PC3, file = "tsne_data_PC3.rds")
+
+# Create new sample groups
+# 1. `VCAP`
+tsne_data_VCAP |> select(inst_id, group, louvain_group) |> 
+  group_by(louvain_group) |> summarize(number = n())
+
+louv_groups_VCAP <- unique(tsne_data_VCAP$louvain_group)
+selected_groups_VCAP <- character()
+for (i in 1:length(louv_groups_VCAP)){
+  louvain_groups <- louv_groups_VCAP[i]
+  filtered_data <- tsne_data_VCAP[tsne_data_VCAP$louvain_group == louvain_groups, ]
+  
+  unique_groups <- unique(filtered_data$group)
+  
+  is_single_louv_group <- sapply(unique_groups, function(group){
+    sum(tsne_data_VCAP$group == group & tsne_data_VCAP$louvain_group != louvain_groups) == 0
+  })
+  selected_groups_VCAP <- c(selected_groups_VCAP, unique_groups[is_single_louv_group])
+}
+## No perturbation group in single louvarian group.
+
+# 2. `MCF7`
+tsne_data_MCF7 |> select(inst_id, group, louvain_group) |> 
+  group_by(louvain_group) |> summarize(number = n())
+
+louv_groups_MCF7 <- unique(tsne_data_MCF7$louvain_group)
+selected_groups_MCF7 <- character()
+for (i in 1:length(louv_groups_MCF7)){
+  louvain_groups <- louv_groups_MCF7[i]
+  filtered_data <- tsne_data_MCF7[tsne_data_MCF7$louvain_group == louvain_groups, ]
+  
+  unique_groups <- unique(filtered_data$group)
+  
+  is_single_louv_group <- sapply(unique_groups, function(group){
+    sum(tsne_data_MCF7$group == group & tsne_data_MCF7$louvain_group != louvain_groups) == 0
+  })
+  selected_groups_MCF7 <- c(selected_groups_MCF7, unique_groups[is_single_louv_group])
+}
+## No perturbation group in single louvarian group.
+
+# 3. `PC3`
+tsne_data_PC3 |> select(inst_id, group, louvain_group) |> 
+  group_by(louvain_group) |> summarize(number = n())
+
+louv_groups_PC3 <- unique(tsne_data_PC3$louvain_group)
+selected_groups_PC3 <- character()
+for (i in 1:length(louv_groups_PC3)){
+  louvain_groups <- louv_groups_PC3[i]
+  filtered_data <- tsne_data_PC3[tsne_data_PC3$louvain_group == louvain_groups, ]
+  
+  unique_groups <- unique(filtered_data$group)
+  
+  is_single_louv_group <- sapply(unique_groups, function(group){
+    sum(tsne_data_PC3$group == group & tsne_data_PC3$louvain_group != louvain_groups) == 0
+  })
+  selected_groups_PC3 <- c(selected_groups_PC3, unique_groups[is_single_louv_group])
+}
+## No perturbation group in single louvarian group.
