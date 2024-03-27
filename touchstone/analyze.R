@@ -11,81 +11,73 @@ library(ggsci)
 source("R/sd_function.R")
 
 load("data/m_genes.rds")
-load("data/samples.rds")
-load("data/result.rds")
-load("data/m_ordered.rds")
+# load("data/samples.rds")
+load("data/samples_tsne.rds")
 
-# # log scale matrix
-# m_genes <- log(m_genes + 1)
-# sum(is.na(m_genes))
-# #[1] 0 no NA
-
-sum(is.na(m_ordered)) # 0
+# check NA
+sum(is.na(m_genes)) #[1] 0 no NA
 
 # Calculate within-group and between-group SD
-genes <- rownames(m_ordered)
+genes <- rownames(m_genes)
 
-hist(m_ordered, breaks=100)
+hist(m_genes, breaks=100)
 
-means <- rowMeans(m_ordered, na.rm=TRUE)
-groups <- samples$group
+means <- rowMeans(m_genes, na.rm=TRUE)
+groups <- samples_tsne$louvain_group
 
 #debug(get_within.sd)
 #get_within.sd(m_genes[genes[1], ], groups)
 
 within_SDs <- unlist(lapply(genes, function(gene) {
   message(gene)
-  get_within.sd(m_ordered[gene, ], groups)
+  get_within.sd(m_genes[gene, ], groups)
 }))
 
 between_SDs <- unlist(lapply(genes, function(gene) {
   message(gene)
-  get_btwn.sd(m_ordered[gene, ], groups)
+  get_btwn.sd(m_genes[gene, ], groups)
 }))
 
 # Make data frame of SD results
-SDs_df2 <- data.frame(
+SDs_df <- data.frame(
   gene = genes, within_sd = within_SDs, between_sd = between_SDs, mean = means
   )
 
 saveRDS(SDs_df, "out/sds.rds")
-saveRDS(SDs_df2, "out/sds2.rds")
 
 # Figure of within vs between SD
-N <- ncol(m_ordered)
-K <- length(levels(factor(samples$group)))
+N <- ncol(m_genes)
+K <- length(levels(factor(samples_tsne$louvain_group)))
 
 # Histogram of SDs_df to visualize
-hist(SDs_df2$within_sd, breaks = 50, xlim = c(0,1))
-hist(SDs_df2$between_sd, breaks = 50, xlim = c(0,1))
-hist(SDs_df2$mean, breaks = 50, xlim = c(4,10))
+hist(SDs_df$within_sd, breaks = 50, xlim = c(0,1))
+hist(SDs_df$between_sd, breaks = 50, xlim = c(0,1))
+hist(SDs_df$mean, breaks = 50, xlim = c(4,10))
 
 # Find candidates of housekeeping genes.
 find_candidates <- data.frame(
-  within_sd = quantile(SDs_df2$within_sd, probs = c(.0,.25, .5, .75, 1.0)),
-  between_sd = quantile(SDs_df2$between_sd, probs = c(.0,.25, .5, .75, 1.0)),
-  mean = quantile(SDs_df2$mean, probs = c(.0,.25, .5, .75, 1.0))
+  within_sd = quantile(SDs_df$within_sd, probs = c(.0,.25, .5, .75, 1.0)),
+  between_sd = quantile(SDs_df$between_sd, probs = c(.0,.25, .5, .75, 1.0)),
+  mean = quantile(SDs_df$mean, probs = c(.0,.25, .5, .75, 1.0))
   )
-shorlist <- SDs_df2[SDs_df2$within_sd < 0.2937889
-                   & SDs_df2$between_sd > 0.33247443 
-                   & SDs_df2$mean > 0.0138620, ]
+shorlist <- SDs_df[SDs_df$within_sd < 0.2234330
+                   & SDs_df$between_sd > 0.4394126 
+                   & SDs_df$mean > 7.866634, ]
 
 # Join the 'gene' column values
 housekeeping <- paste0(shorlist$gene, collapse = '","')
 housekeeping <- paste('"', housekeeping, '"', sep = '')
 cat(housekeeping)
-housekeeping <- c("RNMT","CDH3","EPN2","STX4","CGRRF1","MAPK13","AARS",
-                  "TERF2IP","NUDCD3","TMEM109","ICMT","ETFA","ARHGAP1",
-                  "TCEAL4","PTPN1","TES","PIN1","DDB2","EPHA2","PPIC",
-                  "NCOA3","PTK2","ADGRG1","NENF","DNAJC15","TNFRSF21",
-                  "ARPP19","GNAS","PXN","TXNRD1","S100A13","FDFT1","ANXA7",
-                  "DHRS7","BAG3","CD320")
+housekeeping <- c("XBP1","GRN","PXN","EBNA1BP2","LRP10","VPS26A","SEC24C",
+                  "TCEAL4","S100A13","EPHB4","ERCC1","SNRPF","PPIC","CLTB",
+                  "NCOA3","TSPAN6","ABAT","ANXA7","DHRS7","BAG3","DERA","CD320",
+                  "CISD1","TNFRSF21","TMEM127","ZGPAT")
 
-hkg <- dplyr::filter(SDs_df2, gene %in% housekeeping)
+hkg <- dplyr::filter(SDs_df, gene %in% housekeeping)
 
 # SDs of all genes
 qdraw(
-  ggplot(SDs_df2, aes(x = within_sd, y = between_sd)) + 
+  ggplot(SDs_df, aes(x = within_sd, y = between_sd)) + 
     ggtitle("Between group SD against Within group SD of all genes") +
     geom_point(alpha = 0.3, size = 0.5) + xlim(0, 1) + ylim(0, 1.00350240) +
     geom_point(data = hkg, color = "blue", size = 0.5) +
@@ -102,7 +94,7 @@ qdraw(
 
 # Mean expression of all genes against within-group SD.
 qdraw(
-  ggplot(SDs_df2, aes(x = within_sd, y = mean, label = gene)) +
+  ggplot(SDs_df, aes(x = within_sd, y = mean, label = gene)) +
     ggtitle("Mean expression of all genes against Within group SD") +
     geom_point(alpha = 0.3, size = 0.5) + xlim(0, 1) + ylim(4, 10) +
     geom_point(data = hkg, aes(x = within_sd, y = mean), color = "blue", size = 0.5) +

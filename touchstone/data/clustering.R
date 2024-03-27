@@ -195,10 +195,16 @@ ggplot(tsne_data_PC3, aes(x = tsne1, y = tsne2, colour = louvain_group)) +
   guides(colour = FALSE) + labs(x = "tSNE dimension 1", y = "tSNE dimension 2",
                                 title = "Result of Louvain Clustering of PC3 cell type")
 
+tsne_data_VCAP$louvain_group <- paste(tsne_data_VCAP$louvain_group, "VCAP", sep = "_")
+tsne_data_MCF7$louvain_group <- paste(tsne_data_MCF7$louvain_group, "MCF7", sep = "_")
+tsne_data_PC3$louvain_group <- paste(tsne_data_PC3$louvain_group, "PC3", sep = "_")
+samples_tsne <- rbind(tsne_data_VCAP, tsne_data_MCF7, tsne_data_PC3)
+samples_tsne <- samples_tsne |> select(c("inst_id", "group", "louvain_group"))
+samples_tsne <- samples_tsne[order(match(samples_tsne$inst_id, rownames(m_genes))),]
+all(rownames(m_genes) == samples_tsne$inst_id) # TRUE
+
 # Save the outcomes of clustered groups
-save(tsne_data_VCAP, file = "tsne_data_VCAP.rds")
-save(tsne_data_MCF7, file = "tsne_data_MCF7.rds")
-save(tsne_data_PC3, file = "tsne_data_PC3.rds")
+save(samples_tsne, file = "samples_tsne.rds")
 
 # Create new sample groups
 # 1. `VCAP`
@@ -257,3 +263,15 @@ for (i in 1:length(louv_groups_PC3)){
   selected_groups_PC3 <- c(selected_groups_PC3, unique_groups[is_single_louv_group])
 }
 ## No perturbation group in single louvarian group.
+
+# Correlation analysis using heatmap
+library(reshape2)
+library(corrplot)
+# 1. `VCAP`
+order_VCAP <- tsne_data_VCAP |> group_by(louvain_group) |> arrange(louvain_group)
+## Arrange matrix in order of louvain group
+cormat_VCAP <- m_VCAP[order(match(rownames(m_VCAP), order_VCAP$inst_id)),]
+all(rownames(cormat_VCAP) == order_VCAP$inst_id) # TRUE
+cormat_VCAP <- round(cor(t(cormat_VCAP)), 2)
+corrplot(cormat_VCAP, method = 'square', order = 'original', type = 'lower', diag = FALSE)
+### vector memory exhausted
