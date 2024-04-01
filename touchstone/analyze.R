@@ -11,7 +11,7 @@ library(ggsci)
 source("R/sd_function.R")
 
 load("data/m_genes.rds")
-# load("data/samples.rds")
+load("data/samples.rds")
 load("data/samples_tsne.rds")
 
 # check NA
@@ -75,7 +75,16 @@ housekeeping <- c("XBP1","GRN","PXN","EBNA1BP2","LRP10","VPS26A","SEC24C",
 
 hkg <- dplyr::filter(SDs_df, gene %in% housekeeping)
 
+saveRDS(hkg, "out/candidate_cshkg.rds")
+
+# Mark for common housekeeping genes among 978 landmarks
+common_hkg <- c("HPRT1", "REEP5")
+common_hkg <- dplyr::filter(SDs_df, gene %in% common_hkg)
+
+saveRDS(common_hkg, "out/common_hkg.rds")
+
 # SDs of all genes
+## Candidates of cshkgs are labeled.
 qdraw(
   ggplot(SDs_df, aes(x = within_sd, y = between_sd)) + 
     ggtitle("Between group SD against Within group SD of all genes") +
@@ -93,15 +102,112 @@ qdraw(
 )
 
 # Mean expression of all genes against within-group SD.
+## Candidates of cshkgs and common housekeeping genes among landmark genes are labeled.
 qdraw(
   ggplot(SDs_df, aes(x = within_sd, y = mean, label = gene)) +
     ggtitle("Mean expression of all genes against Within group SD") +
     geom_point(alpha = 0.3, size = 0.5) + xlim(0, 1) + ylim(4, 10) +
     geom_point(data = hkg, aes(x = within_sd, y = mean), color = "blue", size = 0.5) +
-    geom_label_repel(data = hkg, color="blue", label.padding = 0.1, 
+    geom_label_repel(data = hkg, color = "blue", label.padding = 0.1, 
+                     max.overlaps = Inf, segment.curvature = -1e-20, 
+                     segment.square = TRUE) +
+    geom_point(data = common_hkg, aes(x = within_sd, y = mean), color = "red", size = 0.5) +
+    geom_label_repel(data = common_hkg, color = "red", label.padding = 0.1, 
                      max.overlaps = Inf, segment.curvature = -1e-20, 
                      segment.square = TRUE) +
     theme_linedraw(),
   width = 7, height = 7,
   file = "plots/mean_expression_all_gene.png"
+)
+
+# ------------------------------------------------------------------------------
+# Examine for each housekeeping genes
+
+hkgplot <- function(d, mean) {
+  ggplot(d, aes(x = inst_id, y = expression)) +
+    facet_wrap(~ group, scales="free_x") +
+    geom_point(size=0.5) + theme_classic() +
+    geom_hline(yintercept = expression_mean, colour = "steelblue") +
+    theme(
+      axis.text.x = element_blank(),
+      axis.ticks.x = element_blank(),
+      strip.background = element_blank(),
+      panel.grid.major.y = element_line()
+    ) +
+    xlab("sample") + ylab("gene expression") +
+    ggtitle(candidate)
+}
+
+# Select groups: total 17 groups
+selected_group <- samples[samples$count_freq > 100, ]
+selected_group <- paste0(unique(selected_group$group), collapse = '","')
+selected_group <- paste('"', selected_group, '"', sep = '')
+cat(selected_group)
+selected_group <- c("VCAP_UnTrt","VCAP_GFP","VCAP_ERG","MCF7_GFP","MCF7_lacZ",
+                    "MCF7_EMPTY_VECTOR","MCF7_LUCIFERASE","MCF7_UnTrt","MCF7_RFP",
+                    "MCF7_pgw","PC3_GFP","PC3_lacZ","PC3_EMPTY_VECTOR",
+                    "PC3_LUCIFERASE","PC3_UnTrt","PC3_RFP","PC3_pgw")
+
+# 1. `HPRT1`: known hkg
+candidate <- "HPRT1"
+
+expression_d <- data.frame(samples_tsne, expression = m_genes[candidate, ])
+expression_d_filtered <- subset(expression_d, group %in% selected_group)
+expression_mean <- mean(expression_d$expression)
+
+qdraw(
+  hkgplot(expression_d_filtered, expression_mean) +
+    labs(subtitle = sprintf("between-group (all groups) SD: %.3f, between-group (filtered) SD: %.3f",
+                            with(expression_d, get_btwn.sd(expression, group)),
+                            with(expression_d_filtered, get_btwn.sd(expression, group)))),
+  width = 9, height = 5,
+  file = "plots/HPRT1_known.png"
+)
+
+# 2. `REEP5`: known hkg
+candidate <- "REEP5"
+
+expression_d <- data.frame(samples_tsne, expression = m_genes[candidate, ])
+expression_d_filtered <- subset(expression_d, group %in% selected_group)
+expression_mean <- mean(expression_d$expression)
+
+qdraw(
+  hkgplot(expression_d_filtered, expression_mean) +
+    labs(subtitle = sprintf("between-group (all groups) SD: %.3f, between-group (filtered) SD: %.3f",
+                            with(expression_d, get_btwn.sd(expression, group)),
+                            with(expression_d_filtered, get_btwn.sd(expression, group)))),
+  width = 9, height = 5,
+  file = "plots/REEP5_known.png"
+)
+
+# 3. `SNRPF`: candidate cshkg
+candidate <- "SNRPF"
+
+expression_d <- data.frame(samples_tsne, expression = m_genes[candidate, ])
+expression_d_filtered <- subset(expression_d, group %in% selected_group)
+expression_mean <- mean(expression_d$expression)
+
+qdraw(
+  hkgplot(expression_d_filtered, expression_mean) +
+    labs(subtitle = sprintf("between-group (all groups) SD: %.3f, between-group (filtered) SD: %.3f",
+                            with(expression_d, get_btwn.sd(expression, group)),
+                            with(expression_d_filtered, get_btwn.sd(expression, group)))),
+  width = 9, height = 5,
+  file = "plots/SNRPF_candidate.png"
+)
+
+# 4. `VPS26A`: candidate cshkg
+candidate <- "VPS26A"
+
+expression_d <- data.frame(samples_tsne, expression = m_genes[candidate, ])
+expression_d_filtered <- subset(expression_d, group %in% selected_group)
+expression_mean <- mean(expression_d$expression)
+
+qdraw(
+  hkgplot(expression_d_filtered, expression_mean) +
+    labs(subtitle = sprintf("between-group (all groups) SD: %.3f, between-group (filtered) SD: %.3f",
+                            with(expression_d, get_btwn.sd(expression, group)),
+                            with(expression_d_filtered, get_btwn.sd(expression, group)))),
+  width = 9, height = 5,
+  file = "plots/VPS26A_candidate.png"
 )
