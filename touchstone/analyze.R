@@ -43,7 +43,7 @@ SDs_df <- data.frame(
   gene = genes, within_sd = within_SDs, between_sd = between_SDs, mean = means
   )
 
-saveRDS(SDs_df, "out/sds.rds")
+save(SDs_df, file = "out/sds.rds")
 
 # Figure of within vs between SD
 N <- ncol(m_genes)
@@ -75,13 +75,13 @@ housekeeping <- c("XBP1","GRN","PXN","EBNA1BP2","LRP10","VPS26A","SEC24C",
 
 hkg <- dplyr::filter(SDs_df, gene %in% housekeeping)
 
-saveRDS(hkg, "out/candidate_cshkg.rds")
+save(hkg, file = "out/candidate_cshkg.rds")
 
 # Mark for common housekeeping genes among 978 landmarks
 common_hkg <- c("HPRT1", "REEP5")
 common_hkg <- dplyr::filter(SDs_df, gene %in% common_hkg)
 
-saveRDS(common_hkg, "out/common_hkg.rds")
+save(common_hkg, file = "out/common_hkg.rds")
 
 # SDs of all genes
 ## Candidates of cshkgs are labeled.
