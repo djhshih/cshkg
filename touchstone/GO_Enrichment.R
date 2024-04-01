@@ -3,10 +3,6 @@ library(io)
 library(dplyr)
 library(gprofiler2)
 
-load("data/m_genes.rds")
-load("data/samples.rds")
-load("data/samples_tsne.rds")
-load("out/sds.rds")
 load("out/candidate_cshkg.rds")
 load("out/common_hkg.rds")
 
