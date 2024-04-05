@@ -1,8 +1,10 @@
-# Run PCA to select perturbations that give similar effects.
+# Load required libraries for running PCA.
+library(io)
 library(corrr)
 library(ggplot2)
 library(ggrepel)
 library(ggcorrplot)
+library(ggpubr)
 library(FactoMineR)
 library(factoextra)
 # Touchstone Dataset Metadata
@@ -14,10 +16,7 @@ load("samples.rds")
 pca_prcomp <- prcomp(t(scale(m_genes)), scale = FALSE)
 head(pca_prcomp$sdev)
 summary(pca_prcomp)
-
 p_components <- pca_prcomp$x
-# pca_df <- as.data.frame(p_components)
-# write.table(pca_df, file="pca_df.txt", sep="\t", row.names=FALSE)
 
 # Screeplot
 screeplot(pca_prcomp, bstick = TRUE, type = "l", main = NULL)
@@ -37,9 +36,15 @@ pca_prcomp_data$ploty <- pca_prcomp_data[,2]
 all(rownames(pca_prcomp_data) == samples$inst_id)
 pca_prcomp_data$group <- as.character(samples$group)
 
+VCAP_palette <- colorRampPalette(c("mediumpurple", "deepskyblue"))(length(which(grepl("^VCAP", unique(pca_prcomp_data$group)))))
+MCF7_palette <- colorRampPalette(c("deeppink", "coral"))(length(which(grepl("^MCF7", unique(pca_prcomp_data$group)))))
+PC3_palette <- colorRampPalette(c("orange", "limegreen"))(length(which(grepl("^PC3", unique(pca_prcomp_data$group)))))
+pca_color <- c(PC3_palette, VCAP_palette, MCF7_palette)
+
 p_pca_prcomp <- ggplot(pca_prcomp_data, aes(x = plotx, y = ploty, color = group)) +
   geom_point() + labs(x = "PC1", y = "PC2", title = "PCA with sample groups") +
-  theme(legend.position = "bottom", legend.key.size = unit(0.01, "lines"))
+  theme(legend.position = "none", legend.key.size = unit(0.01, "lines")) +
+  scale_color_manual(values = pca_color)
   # stat_ellipse(geom = "polygon", aes(fill = after_scale(alpha(color, 0.3))),
   #              data = pca_prcomp_data[pca_prcomp_data$group != "VCAP_UnTrt",])
 p_pca_prcomp
@@ -73,22 +78,19 @@ save(s_PC3, file = "s_PC3.rds")
 VCAP_pca_prcomp <- prcomp(t(scale(m_VCAP)), scale = FALSE)
 head(VCAP_pca_prcomp$sdev)
 summary(VCAP_pca_prcomp)
-
-# Screeplot
+## Screeplot
 screeplot(VCAP_pca_prcomp, bstick = TRUE, type = "l", main = NULL)
-
-## Check variation of Principal Components in the dataset
+### Check variation of Principal Components in the dataset
 VCAP_pca_var <- VCAP_pca_prcomp$sdev^2 # show how much variation each PC accounts for
 VCAP_pca_var_per <- round(VCAP_pca_var/sum(VCAP_pca_var)*100, 1) # represent as percentage %
 barplot(VCAP_pca_var_per, main = "Scree plot Principal Components Variation of VCAP", 
         xlab = "Principal Component (PC1~PC50)", ylab = "Percent Variation",
         xlim = c(0,50))
-## PC1 is regarded as about 23.1% of variation in the dataset.
+### PC1 is regarded as about 23.1% of variation in the dataset.
 
-# Biplot
+## Biplot
 biplot(VCAP_pca_prcomp, scale = 0, xlabs = rep(".", nrow(t(m_VCAP))))
-
-# Biploy using ggplot to represent data of PC1 over PC2
+## Biploy using ggplot to represent data of PC1 over PC2
 VCAP_pca_prcomp_data <- data.frame(VCAP_pca_prcomp$x)
 VCAP_pca_prcomp_data$plotx <- VCAP_pca_prcomp_data[,1]
 VCAP_pca_prcomp_data$ploty <- VCAP_pca_prcomp_data[,2]
@@ -98,10 +100,10 @@ VCAP_pca_prcomp_data$group <- as.character(s_VCAP$group)
 p_pca_VCAP <- ggplot(VCAP_pca_prcomp_data, aes(x = plotx, y = ploty, color = group)) +
   geom_point() + labs(x = "PC1", y = "PC2", title = "PCA with sample groups of VCAP") +
   theme(legend.key.size = unit(0.01, "cm"), legend.text = element_text(size = 5),
-        legend.position = "bottom") + 
-  scale_colour_ordinal() +
-  stat_ellipse(geom = "polygon", aes(fill = after_scale(alpha(color, 0.01))),
-             data = VCAP_pca_prcomp_data[VCAP_pca_prcomp_data$group != "VCAP_UnTrt", ])
+        legend.position = "none") + 
+  scale_colour_ordinal()
+  # stat_ellipse(geom = "polygon", aes(fill = after_scale(alpha(color, 0.01))),
+  #            data = VCAP_pca_prcomp_data[VCAP_pca_prcomp_data$group != "VCAP_UnTrt", ])
 p_pca_VCAP
 
 # Look for samples without >= 20 count frequency groups
@@ -122,30 +124,6 @@ sub_VCAP_prcomp <- sub_VCAP_prcomp[sub_VCAP_prcomp$group != "VCAP_NNC-55-0396", 
 ggplot(sub_VCAP_prcomp, aes(x = plotx, y = ploty, color = group)) +
   geom_point() + labs(x = "PC1", y = "PC2", 
                       title = "PCA with sample groups of VCAP without high (>=30) frequency groups and VCAP_grp1") +
-  theme(legend.key.size = unit(0.01, "cm"), legend.text = element_text(size = 5),
-        legend.position = "bottom") + 
-  scale_colour_ordinal() + geom_text_repel(aes(label = group))
-VCAP_grp1 <- c("VCAP_EMPTY_VECTOR", "VCAP_PANK4", "VCAP_PAK7", "VCAP_MORN1",
-               "VCAP_KIAA1804", "VCAP_FGFRL1", "VCAP_ADPGK", "VCAP_CDKL4", "VCAP_FUK",
-               "VCAP_LOC392265", "VCAP_LOC390877", "VCAP_IPMK", "VCAP_LOC392226", "VCAP_MAGI3",
-               "VCAP_TK2", "VCAP_LOC400301", "VCAP_HIPK4", "VCAP_DCLK3", "VCAP_ITGB1BP3",
-               "VCAP_WNK1", "VCAP_AGK", "VCAP_LRRK1", "VCAP_EEF2K", "VCAP_SH3BP4",
-               "VCAP_GK5", "VCAP_BMP2KL", "VCAP_MASTL", "VCAP_DGKK", "VCAP_EIF2AK4",
-               "VCAP_NME3", "VCAP_LOC441971", "VCAP_LOC392347", "VCAP_PLXNA3", "VCAP_FGGY",
-               "VCAP_MEX3B", "VCAP_XRCC6BP1", "VCAP_PNCK", "VCAP_WNK4", "VCAP_IGFN1")
-# Modify sample group and prcomp data
-s_VCAP$new_group <- s_VCAP$group
-s_VCAP$new_group[s_VCAP$group %in% VCAP_grp1] <- "VCAP_grp1"
-VCAP_pca_prcomp_data$group <- as.character(s_VCAP$new_group)
-sub_VCAP_prcomp <- VCAP_pca_prcomp_data[VCAP_pca_prcomp_data$group != "VCAP_grp1", ]
-# Check for perturbagen starting with BRD-*
-sub_VCAP_prcomp$perturbagen <- sub(".*_", "", sub_VCAP_prcomp$group)
-sub_VCAP_BRD <- sub_VCAP_prcomp[grep("BRD-.*", sub_VCAP_prcomp$perturbagen), ]
-sub_VCAP_BRD <- subset(sub_VCAP_BRD, count_freq > 23) # remove groups <= 23 (no distinct effect)
-sub_VCAP_BRD <- subset(sub_VCAP_BRD, count_freq > 24) 
-ggplot(sub_VCAP_BRD, aes(x = plotx, y = ploty, color = group)) +
-  geom_point() + labs(x = "PC1", y = "PC2", 
-                      title = "PCA with sample groups of VCAP with BRD- perturbagen (freq >= 24)") +
   theme(legend.key.size = unit(0.01, "cm"), legend.text = element_text(size = 5),
         legend.position = "bottom") + 
   scale_colour_ordinal() + geom_text_repel(aes(label = group))
@@ -218,10 +196,18 @@ p_pca_PC3 <- ggplot(PC3_pca_prcomp_data, aes(x = plotx, y = ploty, color = group
   geom_point() + labs(x = "PC1", y = "PC2", title = "PCA with sample groups of PC3") +
   theme(legend.key.size = unit(0.01, "cm"), legend.text = element_text(size = 5),
         legend.position = "none") + 
-  scale_colour_ordinal() +
-  stat_ellipse(geom = "polygon", aes(fill = after_scale(alpha(color, 0.01))),
-               data = PC3_pca_prcomp_data[PC3_pca_prcomp_data$group != "PC3_UnTrt",])
+  scale_colour_ordinal()
+  # stat_ellipse(geom = "polygon", aes(fill = after_scale(alpha(color, 0.01))),
+  #              data = PC3_pca_prcomp_data[PC3_pca_prcomp_data$group != "PC3_UnTrt",])
 p_pca_PC3
+
+# Combine plots of PCA for each matrixes
+qdraw(
+  ggarrange(p_pca_VCAP, p_pca_MCF7, p_pca_PC3, 
+          labels = c("A", "B", "C"), ncol = 3, nrow = 1),
+  width = 18, height = 5,
+  file = "../plots/PCA_result.png"
+)
 
 save(VCAP_pca_prcomp_data, file = "VCAP_pca_prcomp_data.rds")
 save(MCF7_pca_prcomp_data, file = "MCF7_pca_prcomp_data.rds")
