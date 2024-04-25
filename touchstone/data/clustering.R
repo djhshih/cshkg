@@ -1,6 +1,7 @@
 # Load required libraries for group clustering.
 library(io)
 library(dplyr)
+library(tidyr)
 library(factoextra)
 library(cluster)
 library(dendextend)
@@ -19,12 +20,12 @@ load("m_MCF7.rds")
 load("s_MCF7.rds")
 load("m_PC3.rds")
 load("s_PC3.rds")
+load("samples_control.rds")
+load("samples_perts.rds")
 
 # Prepare matrices for group clustering
 m_genes <- t(m_genes)
 m_VCAP <- t(m_VCAP)
-m_MCF7 <- t(m_MCF7)
-m_PC3 <- t(m_PC3)
 
 # Hierarchical Clustering: `VCAP`
 # 1. Choose Distance Metric
@@ -81,7 +82,7 @@ p_tsne_VCAP <- ggplot(tsne_data_VCAP, aes(x = tsne1, y = tsne2, colour = group))
   labs(x = "tSNE dimension 1", y = "tSNE dimension 2",
         title = "tSNE result of VCAP cell line colored by perturbation type")
 p_tsne_VCAP
-### k >= 12 for `VCAP` cell line
+### k >= 15 for `VCAP` cell line
 ## c. Louvain clustering
 knn_VCAP <- get.knn(as.matrix(tsne_VCAP$Y), k = 16)
 knn_VCAP <- data.frame(from = rep(1:nrow(knn_VCAP$nn.index), 16), 
@@ -181,8 +182,11 @@ tsne_data_MCF7$louvain_group <- paste(tsne_data_MCF7$louvain_group, "MCF7", sep 
 tsne_data_PC3$louvain_group <- paste(tsne_data_PC3$louvain_group, "PC3", sep = "_")
 samples_tsne <- rbind(tsne_data_VCAP, tsne_data_MCF7, tsne_data_PC3)
 samples_tsne <- samples_tsne |> select(c("inst_id", "group", "louvain_group"))
-samples_tsne <- samples_tsne[order(match(samples_tsne$inst_id, rownames(m_genes))),]
-all(rownames(m_genes) == samples_tsne$inst_id) # TRUE
+samples_control <- samples_control[,c(1,2)]
+samples_control$louvain_group <- samples_control$group
+samples_tsne <- rbind(samples_tsne, samples_control)
+samples_tsne <- samples_tsne[order(match(samples_tsne$inst_id, colnames(m_genes))),]
+all(colnames(m_genes) == samples_tsne$inst_id) # TRUE
 
 # Chose representative perturbagen for each clustered groups
 grouped_df <- samples_tsne |> group_by(louvain_group, group) |> count() |> ungroup()
@@ -201,6 +205,19 @@ select_representative <- select_representative |> unite(louvain_group_name, grou
 # Update on new sample dataset
 samples_cluster <- merge(samples_tsne, select_representative, by = "louvain_group", all.x = TRUE)
 samples_cluster <- samples_cluster[, c(2,3,1,4,5,6)]
+
+# Improving the clusters
+improve <- samples_cluster |> group_by(louvain_group_name) |> 
+  summarize(num_perturbagen = n_distinct(group))
+improve[improve[2] == "1",]$louvain_group_name
+samples_cluster$louvain_group_name <- replace(samples_cluster$louvain_group_name,
+                                              samples_cluster$louvain_group_name == "VCAP_ERG_12",
+                                              "VCAP_ERG_1")
+length(unique(samples_cluster$louvain_group_name))
+
+sort_sample <- colnames(m_genes)
+samples_cluster <- samples_cluster[order(match(samples_cluster$inst_id, sort_sample)),]
+all(colnames(m_genes) == samples_cluster$inst_id) #TRUE
 
 # Save the outcomes of clustered groups
 save(samples_cluster, file = "samples_cluster.rds")

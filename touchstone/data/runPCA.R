@@ -10,7 +10,6 @@ library(factoextra)
 # Touchstone Dataset Metadata
 load("m.rds")
 load("m_genes.rds")
-load("touchstone_sample.rds")
 load("samples.rds")
 
 pca_prcomp <- prcomp(t(scale(m_genes)), scale = FALSE)
@@ -52,20 +51,26 @@ p_pca_prcomp
 ## Continue PCA for each cell type, "VCAP", "MCF7", and "PC3"
 
 # Current samples are divided depends on cell type and perturbagen (total 2380 groups)
+# To proceed with unsupervised learning, control samples are not considered to be clustered.
+samples$pert_controls <- sub("_.*", "", samples$pert_type)
+samples_control <- samples[which(samples$pert_controls == "ctl"),]
+samples_perts <- samples[which(samples$pert_controls == "trt"),]
+
 # Divide matrix by cell types "VCAP", "MCF7", "PC3" (total 3 matrices)
-samples$cell_type <- sub("_.*", "", samples$group)
+# samples$cell_type <- sub("_.*", "", samples$group)
+colnames(samples)[5] <- "cell_type"
 
-s_VCAP <- samples[which(samples$cell_type == "VCAP"),]
+s_VCAP <- samples_perts[which(samples_perts$cell_type == "VCAP"),]
 m_VCAP <- m_genes[, intersect(colnames(m_genes), s_VCAP$inst_id)]
-dim(m_VCAP) # 978 genes x 5078 samples
+dim(m_VCAP) # 978 genes x 4401 samples
 
-s_MCF7 <- samples[which(samples$cell_type == "MCF7"),]
+s_MCF7 <- samples_perts[which(samples_perts$cell_type == "MCF7"),]
 m_MCF7 <- m_genes[, intersect(colnames(m_genes), s_MCF7$inst_id)]
-dim(m_MCF7) # 978 genes x 21776 samples
+dim(m_MCF7) # 978 genes x 19110 samples
 
-s_PC3 <- samples[which(samples$cell_type == "PC3"),]
+s_PC3 <- samples_perts[which(samples_perts$cell_type == "PC3"),]
 m_PC3 <- m_genes[, intersect(colnames(m_genes), s_PC3$inst_id)]
-dim(m_PC3) # 978 genes x 22353 samples
+dim(m_PC3) # 978 genes x 19615 samples
 
 save(m_VCAP, file = "m_VCAP.rds")
 save(s_VCAP, file = "s_VCAP.rds")
@@ -86,7 +91,7 @@ VCAP_pca_var_per <- round(VCAP_pca_var/sum(VCAP_pca_var)*100, 1) # represent as 
 barplot(VCAP_pca_var_per, main = "Scree plot Principal Components Variation of VCAP", 
         xlab = "Principal Component (PC1~PC50)", ylab = "Percent Variation",
         xlim = c(0,50))
-### PC1 is regarded as about 23.1% of variation in the dataset.
+### PC1 is regarded as about 22.8% of variation in the dataset.
 
 ## Biplot
 biplot(VCAP_pca_prcomp, scale = 0, xlabs = rep(".", nrow(t(m_VCAP))))
@@ -98,7 +103,7 @@ all(rownames(VCAP_pca_prcomp_data) == s_VCAP$inst_id)
 VCAP_pca_prcomp_data$group <- as.character(s_VCAP$group)
 
 p_pca_VCAP <- ggplot(VCAP_pca_prcomp_data, aes(x = plotx, y = ploty, color = group)) +
-  geom_point() + labs(x = "PC1", y = "PC2", title = "PCA with sample groups of VCAP") +
+  geom_point() + labs(x = "PC1", y = "PC2", title = "PCA with sample groups of cell type `VCAP`") +
   theme(legend.key.size = unit(0.01, "cm"), legend.text = element_text(size = 5),
         legend.position = "none") + 
   scale_colour_ordinal()
@@ -145,7 +150,7 @@ MCF7_pca_var_per <- round(MCF7_pca_var/sum(MCF7_pca_var)*100, 1) # represent as 
 barplot(MCF7_pca_var_per, main = "Scree plot Principal Components Variation of MCF7", 
         xlab = "Principal Component (PC1~PC50)", ylab = "Percent Variation",
         xlim = c(0,50))
-## PC1 is regarded as about 13.4% of variation in the dataset.
+## PC1 is regarded as about 19.2% of variation in the dataset.
 
 # Biplot
 biplot(MCF7_pca_prcomp, scale = 0, xlabs = rep(".", nrow(t(m_MCF7))))
@@ -158,7 +163,7 @@ all(rownames(MCF7_pca_prcomp_data) == s_MCF7$inst_id)
 MCF7_pca_prcomp_data$group <- as.character(s_MCF7$group)
 
 p_pca_MCF7 <- ggplot(MCF7_pca_prcomp_data, aes(x = plotx, y = ploty, color = group)) +
-  geom_point() + labs(x = "PC1", y = "PC2", title = "PCA with sample groups of MCF7") +
+  geom_point() + labs(x = "PC1", y = "PC2", title = "PCA with sample groups of cell type `MCF7`") +
   theme(legend.key.size = unit(0.01, "cm"), legend.text = element_text(size = 5),
         legend.position = "none") + 
   scale_colour_ordinal()
@@ -180,7 +185,7 @@ PC3_pca_var_per <- round(PC3_pca_var/sum(PC3_pca_var)*100, 1) # represent as per
 barplot(PC3_pca_var_per, main = "Scree plot Principal Components Variation of PC3", 
         xlab = "Principal Component (PC1~PC50)", ylab = "Percent Variation",
         xlim = c(0,50))
-## PC1 is regarded as about 15.5% of variation in the dataset.
+## PC1 is regarded as about 23.1% of variation in the dataset.
 
 # Biplot
 biplot(PC3_pca_prcomp, scale = 0, xlabs = rep(".", nrow(t(m_PC3))))
@@ -193,7 +198,7 @@ all(rownames(PC3_pca_prcomp_data) == s_PC3$inst_id)
 PC3_pca_prcomp_data$group <- as.character(s_PC3$group)
 
 p_pca_PC3 <- ggplot(PC3_pca_prcomp_data, aes(x = plotx, y = ploty, color = group)) +
-  geom_point() + labs(x = "PC1", y = "PC2", title = "PCA with sample groups of PC3") +
+  geom_point() + labs(x = "PC1", y = "PC2", title = "PCA with sample groups of cell type `PC3`") +
   theme(legend.key.size = unit(0.01, "cm"), legend.text = element_text(size = 5),
         legend.position = "none") + 
   scale_colour_ordinal()
@@ -212,3 +217,5 @@ qdraw(
 save(VCAP_pca_prcomp_data, file = "VCAP_pca_prcomp_data.rds")
 save(MCF7_pca_prcomp_data, file = "MCF7_pca_prcomp_data.rds")
 save(PC3_pca_prcomp_data, file = "PC3_pca_prcomp_data.rds")
+save(samples_control, file = "samples_control.rds")
+save(samples_perts, file = "samples_perts.rds")

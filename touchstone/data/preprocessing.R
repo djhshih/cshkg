@@ -28,6 +28,8 @@ hist(sample_group$count_freq, breaks = 50, xlim = c(0,50)) # filter sample group
 # Filter sample group
 samples <- subset(sample_group, count_freq >= 10)
 length(unique(samples$group))
+samples <- merge(samples,touchstone_sample, by = "inst_id")
+samples <- samples[,c(1,2,3,8,13)]
 ## [1] 2380: Total 2380 groups
 
 # Make group information df with group names and number of samples in each group

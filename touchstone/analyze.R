@@ -12,7 +12,6 @@ library(ggsci)
 source("R/sd_function.R")
 
 load("data/m_genes.rds")
-load("data/samples.rds")
 load("data/samples_cluster.rds")
 
 # check NA
@@ -61,28 +60,21 @@ find_candidates <- data.frame(
   between_sd = quantile(SDs_df$between_sd, probs = c(.0,.25, .5, .75, 1.0)),
   mean = quantile(SDs_df$mean, probs = c(.0,.25, .5, .75, 1.0))
   )
-shorlist <- SDs_df[SDs_df$within_sd < 0.2234330
-                   & SDs_df$between_sd > 0.4394126 
+shorlist <- SDs_df[SDs_df$within_sd < 0.2477120
+                   & SDs_df$between_sd > 0.4513655 
                    & SDs_df$mean > 7.866634, ]
 
 # Join the 'gene' column values
 housekeeping <- paste0(shorlist$gene, collapse = '","')
 housekeeping <- paste('"', housekeeping, '"', sep = '')
 cat(housekeeping)
-housekeeping <- c("XBP1","GRN","PXN","EBNA1BP2","LRP10","VPS26A","SEC24C",
-                  "TCEAL4","S100A13","EPHB4","ERCC1","SNRPF","PPIC","CLTB",
-                  "NCOA3","TSPAN6","ABAT","ANXA7","DHRS7","BAG3","DERA","CD320",
-                  "CISD1","TNFRSF21","TMEM127","ZGPAT")
+housekeeping <- c("GRN","PXN","EBNA1BP2","VPS26A","TCEAL4","S100A13","SNRPD1",
+                  "EPHB4","PPIC","NCOA3","ABAT","ANXA7","DHRS7","BAG3","DERA",
+                  "CD320","CISD1","TNFRSF21")
 
 hkg <- dplyr::filter(SDs_df, gene %in% housekeeping)
 
 save(hkg, file = "out/candidate_cshkg.rds")
-
-
-temp <- representative[representative$louvain_group == "40_PC3",]
-temp <- temp |> separate(group, into = c("cell_line", "perturbagen"), sep = "_", extra = "merge", fill = "right")
-temp2 <- paste0(temp$perturbagen, collapse = ', ')
-cat(temp2)
 
 # Mark for common housekeeping genes among 978 landmarks
 ## Examples of well-established housekeeping genes encompass followings:
@@ -141,11 +133,11 @@ qdraw(
 # Find list of potential universal hkgs that has lowest within-group SD
 
 shorlist <- top_n(SDs_df, -10, within_sd)
-shorlist <- shorlist[shorlist$between_sd < 0.3239494, ]
+shorlist <- shorlist[shorlist$between_sd < 0.3407432, ]
 housekeeping <- paste0(shorlist$gene, collapse = '","')
 housekeeping <- paste('"', housekeeping, '"', sep = '')
 cat(housekeeping)
-housekeeping <- c("RNPS1","OXSR1","FAH","C2CD5","VDAC1")
+housekeeping <- c("RNPS1","TMED10","RAD23B","TBCB","FAH","C2CD5","VDAC1","STUB1","RPF1")
 uni_hkg <- dplyr::filter(SDs_df, gene %in% housekeeping)
 
 # Potential universal hkgs and known common hkgs are labeled
@@ -192,7 +184,7 @@ qdraw(
 # Examine for each housekeeping genes
 
 hkgplot <- function(d, mean) {
-  ggplot(d, aes(x = inst_id, y = expression)) +
+  ggplot(d, aes(x = inst_id, y = expression, colour = perturbagen)) +
     facet_wrap(~ group, scales="free_x") +
     geom_point(size=0.5) + theme_classic() +
     geom_hline(yintercept = expression_mean, colour = "steelblue") +
@@ -200,91 +192,17 @@ hkgplot <- function(d, mean) {
       axis.text.x = element_blank(),
       axis.ticks.x = element_blank(),
       strip.background = element_blank(),
-      panel.grid.major.y = element_line()
+      panel.grid.major.y = element_line(),
+      legend.position = "none"
     ) +
     xlab("sample") + ylab("gene expression") +
     ggtitle(candidate)
 }
 
-# Select groups that has more than 100 samples
-selected_group <- samples[samples$count_freq > 100, ]
-selected_group <- paste0(unique(selected_group$group), collapse = '","')
-selected_group <- paste('"', selected_group, '"', sep = '')
-cat(selected_group)
-selected_group <- c("VCAP_UnTrt","VCAP_GFP","VCAP_ERG","MCF7_GFP","MCF7_lacZ",
-                    "MCF7_EMPTY_VECTOR","MCF7_LUCIFERASE","MCF7_UnTrt","MCF7_RFP",
-                    "MCF7_pgw","PC3_GFP","PC3_lacZ","PC3_EMPTY_VECTOR",
-                    "PC3_LUCIFERASE","PC3_UnTrt","PC3_RFP","PC3_pgw")
-## total 17 groups
-
-# 1. `HPRT1`: known hkg
-candidate <- "HPRT1"
-
-expression_d <- data.frame(samples_cluster, expression = m_genes[candidate, ])
-expression_d_filtered <- subset(expression_d, group %in% selected_group)
-expression_mean <- mean(expression_d$expression)
-
-qdraw(
-  hkgplot(expression_d_filtered, expression_mean) +
-    labs(subtitle = sprintf("between-group (all groups) SD: %.3f, between-group (filtered) SD: %.3f",
-                            with(expression_d, get_btwn.sd(expression, group)),
-                            with(expression_d_filtered, get_btwn.sd(expression, group)))),
-  width = 9, height = 5,
-  file = "plots/HPRT1_known.png"
-)
-
-# 2. `REEP5`: known hkg
-candidate <- "REEP5"
-
-expression_d <- data.frame(samples_cluster, expression = m_genes[candidate, ])
-expression_d_filtered <- subset(expression_d, group %in% selected_group)
-expression_mean <- mean(expression_d$expression)
-
-qdraw(
-  hkgplot(expression_d_filtered, expression_mean) +
-    labs(subtitle = sprintf("between-group (all groups) SD: %.3f, between-group (filtered) SD: %.3f",
-                            with(expression_d, get_btwn.sd(expression, group)),
-                            with(expression_d_filtered, get_btwn.sd(expression, group)))),
-  width = 9, height = 5,
-  file = "plots/REEP5_known.png"
-)
-
-# 3. `SNRPF`: candidate cshkg
-candidate <- "SNRPF"
-
-expression_d <- data.frame(samples_cluster, expression = m_genes[candidate, ])
-expression_d_filtered <- subset(expression_d, group %in% selected_group)
-expression_mean <- mean(expression_d$expression)
-
-qdraw(
-  hkgplot(expression_d_filtered, expression_mean) +
-    labs(subtitle = sprintf("between-group (all groups) SD: %.3f, between-group (filtered) SD: %.3f",
-                            with(expression_d, get_btwn.sd(expression, group)),
-                            with(expression_d_filtered, get_btwn.sd(expression, group)))),
-  width = 9, height = 5,
-  file = "plots/SNRPF_candidate.png"
-)
-
-# 4. `VPS26A`: candidate cshkg
-candidate <- "VPS26A"
-
-expression_d <- data.frame(samples_cluster, expression = m_genes[candidate, ])
-expression_d_filtered <- subset(expression_d, group %in% selected_group)
-expression_mean <- mean(expression_d$expression)
-
-qdraw(
-  hkgplot(expression_d_filtered, expression_mean) +
-    labs(subtitle = sprintf("between-group (all groups) SD: %.3f, between-group (filtered) SD: %.3f",
-                            with(expression_d, get_btwn.sd(expression, group)),
-                            with(expression_d_filtered, get_btwn.sd(expression, group)))),
-  width = 9, height = 5,
-  file = "plots/VPS26A_candidate.png"
-)
-
-
-# Select groups that has more than 1000 samples
-samples_cluster <- samples_cluster[, c(1,4,5,6)]
-colnames(samples_cluster)[2] <- "group"
+# Select groups that has more than 500 samples
+samples_cluster <- samples_cluster[, c(1,2,4,5)]
+colnames(samples_cluster)[2] <- "perturbagen"
+colnames(samples_cluster)[3] <- "group"
 samples_cluster <- samples_cluster %>%
   group_by(group) %>%
   mutate(count_freq = n())
@@ -292,14 +210,20 @@ selected_group <- samples_cluster[samples_cluster$count_freq > 500, ]
 selected_group <- paste0(unique(selected_group$group), collapse = '","')
 selected_group <- paste('"', selected_group, '"', sep = '')
 cat(selected_group)
-selected_group <- c("PC3_UnTrt_1","MCF7_UnTrt_12","PC3_UnTrt_12","MCF7_LUCIFERASE_15",
-                    "PC3_UnTrt_15","MCF7_UnTrt_16","MCF7_UnTrt_18","MCF7_GFP_27",
-                    "PC3_UnTrt_27","MCF7_UnTrt_3","MCF7_UnTrt_30","MCF7_LUCIFERASE_31",
-                    "PC3_UnTrt_32","MCF7_pgw_33","PC3_UnTrt_34","MCF7_UnTrt_35",
-                    "PC3_LUCIFERASE_36","PC3_UnTrt_38","PC3_UnTrt_39","PC3_UnTrt_40",
-                    "PC3_UnTrt_41","MCF7_GFP_43","MCF7_UnTrt_45","PC3_UnTrt_47",
-                    "MCF7_UnTrt_48","PC3_KRAS_50","MCF7_UnTrt_9")
-## total 27 groups
+selected_group <- c("MCF7_LIMK2_3","MCF7_UnTrt_MCF7","MCF7_MET_4","MCF7_KRAS_6",
+                    "MCF7_AKT1_8","MCF7_AKT1_10","MCF7_KAT6A_12","MCF7_AKT1_13",
+                    "PC3_MET_1","PC3_UnTrt_PC3","PC3_MET_5","PC3_MET_9",
+                    "PC3_PDGFRA_15","PC3_FZD5_19","PC3_IFNAR2_24","PC3_KRAS_27",
+                    "PC3_KRAS_28","MCF7_AKT1_34","MCF7_KRAS_40","PC3_AKT1_29",
+                    "PC3_KRAS_30","PC3_KRAS_33","MCF7_RYK_42","MCF7_MALT1_43",
+                    "MCF7_ADCK3_44")
+## total 25 groups
+
+load("data/touchstone_sample.rds")
+touchstone_sample <- touchstone_sample[match(samples_cluster$inst_id, touchstone_sample$inst_id), ]
+all(touchstone_sample$inst_id == samples_cluster$inst_id)
+samples_cluster$pert_type <- touchstone_sample$pert_type[match(samples_cluster$inst_id, touchstone_sample$inst_id)]
+samples_cluster$pert_time <- touchstone_sample$pert_time[match(samples_cluster$inst_id, touchstone_sample$inst_id)]
 
 # 1. `HPRT1`: known hkg
 candidate <- "HPRT1"
@@ -333,8 +257,8 @@ qdraw(
   file = "plots/REEP5_known_louv.png"
 )
 
-# 3. `SNRPF`: candidate cshkg
-candidate <- "SNRPF"
+# 3. `GRN`: candidate cshkg
+candidate <- "GRN"
 
 expression_d <- data.frame(samples_cluster, expression = m_genes[candidate, ])
 expression_d_filtered <- subset(expression_d, group %in% selected_group)
@@ -346,11 +270,11 @@ qdraw(
                             with(expression_d, get_btwn.sd(expression, group)),
                             with(expression_d_filtered, get_btwn.sd(expression, group)))),
   width = 9, height = 5,
-  file = "plots/SNRPF_candidate_louv.png"
+  file = "plots/GRN_candidate_louv.png"
 )
 
-# 4. `VPS26A`: candidate cshkg
-candidate <- "VPS26A"
+# 4. `PXN`: candidate cshkg
+candidate <- "PXN"
 
 expression_d <- data.frame(samples_cluster, expression = m_genes[candidate, ])
 expression_d_filtered <- subset(expression_d, group %in% selected_group)
@@ -362,5 +286,13 @@ qdraw(
                             with(expression_d, get_btwn.sd(expression, group)),
                             with(expression_d_filtered, get_btwn.sd(expression, group)))),
   width = 9, height = 5,
-  file = "plots/VPS26A_candidate_louv.png"
+  file = "plots/PXN_candidate_louv.png"
 )
+
+# MCF7_ADCK3_44
+down1 <- samples_cluster[which(samples_cluster$group == "MCF7_ADCK3_44"),]
+length(unique(down1$perturbagen))
+down1 <- down1 |>
+  separate(perturbagen, into = c("sep", "perturbagen"), sep = "_", extra = "merge", fill = "right")
+cat(paste0(down1$perturbagen, collapse = ', '))
+
