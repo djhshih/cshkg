@@ -9,21 +9,21 @@ The purpose of this project lies in analysing the expression levels of various g
 ### SSH
 
 SSH key
-A public key was set and saved in /home/yerihan/.ssh/id_ed25519.pub
+A public key can be set and saved in /<user_path>/.ssh/id_ed25519.pub
 
 [Guide to set up a SSH key](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent)
 ```
-ssh-keygen -t ed25519 -C "hanyeri0223@gmail.com"
+ssh-keygen -t ed25519 -C "<user_email_address>"
 ```
 
 Github
 ```
-git clone git@github.com:hanyeri/cshkg
+git clone git@github.com:yerimeeei/cshkg
 ```
 User information
 ```
-git config --global user.email "hanyeri0223@gmail.com"
-git config --global user.name "Yeri Han"
+git config --global user.email "<user_email_address>"
+git config --global user.name "<user_name>"
 ```
 
 ### Rstudio
@@ -64,6 +64,7 @@ This repo is organized by different datasets:
 1. biogps
 2. pancan
 3. gtex
+4. touchstone
 
 ## Download and preprocess data
 
@@ -80,7 +81,7 @@ Set R working directory to be the same as the script.
 [Session] -> [Set Working Directory] -> [To Source file location]
 ```
 
-Then, run `analyze.R` in pancan.
+Then, run `analyze.R` in specific dataset directory.
 
 ## Mathematcis
 
@@ -88,26 +89,29 @@ We calculate variations within and between the groups as follows.
 
 For each gene, between-group standard deviation `\sigma_{bw}` is calculated as
 ```
-\sigma_{bw} = \sqrt{ (\sum_g^G m_g - \bar{m})^2 / (G - 1) }
-\bar{m} = \frac{1}{G} \sum_g^G m_g
+$`\sigma_{bw} = \sqrt{ (\sum_k^K m_k - \bar{m})^2 / (K - 1) }`$
+$`\bar{m} = \frac{1}{K} \sum_k^K m_k`$
 ```
-where `G` is the number of groups,
-and `m_g` is the mean expression within group `g`.
+where `K` is the number of groups,
+`m_k` is the mean expression within group `k`,
+and `m` is the overall mean expression of samples.
 
 The within group standard deviation `\sigma_{wi}` is calculated by
 ```
-\sigma_{wi} = \sqrt{ (\sum_g^G ((x_i^{(g)} - \bar{x}^{(g)})^2) / ( \sum_g^G N_g - 1 )  }
-\bar{x}^{(g)} = \frac{1}{N_g} \sum_i^{N_g} x_i^{(g)}
+$`\sigma_{wi} = \sqrt{ (\sum_k^K (\sum_i^N_k (x_i^{(k)} - \bar{x}^{(k)})^2)) / ( \sum_k^K N_k - 1 )  }`$
+$`\bar{x}^{(k)} = \frac{1}{N_k} \sum_i^{N_k} x_i^{(k)}`$
 ```
-where `N_g` is the number of samples within group `g`, and
-`x_i^{(g)}` is the expression of sample `i` within group `g`.
+where `N_k` is the number of samples within group `k` where k ∈ K,
+and `x_i^{(k)}` is the expression of sample `i` within group `k`.
 
 ## Git
 
+* diff: outputs the difference between two inputs
+* status: displays the state of the working directory and the staging area
 * add: take modified file from working directory to Git index (staging area)
 * commit: creates a new revision log, you can only commit after you add
 * push: add the change to the GitHub
-* diff: outputs the difference between two inputs
+* pull: updates the local repository to include changes already included in the remote repository
 
 [Guide on Git](https://rogerdudler.github.io/git-guide/)
 
